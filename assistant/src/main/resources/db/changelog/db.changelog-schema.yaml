@@ -95,13 +95,9 @@ databaseChangeLog:
             columns:
               - column:
                   name: conversation_id
-                  type: uuid
+                  type: text
                   constraints:
                     nullable: false
-                    referencedTableName: chats
-                    referencedColumnNames: chat_id
-                    foreignKeyName: fk_chat_memory_chat
-                    deleteCascade: true
               - column:
                   name: content
                   type: text
@@ -126,6 +122,15 @@ databaseChangeLog:
                   name: conversation_id
               - column:
                   name: timestamp
+
+  - changeSet:
+      id: 1763680127000-enable-pgvector
+      author: cascade
+      changes:
+        - sql:
+            comment: "Ensure pgvector extension is available before using vector columns"
+            sql: |
+              CREATE EXTENSION IF NOT EXISTS vector;
 
   - changeSet:
       id: 1763680128226-create-vector-store
