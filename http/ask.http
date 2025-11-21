@@ -1,0 +1,33 @@
+@ASSISTANT_URL=http://localhost:8083/proposal-assistant-service
+@QUESTION1=When can I adopt a dog?
+@QUESTION2=Do you have any energetic dogs?
+@USER_ID=00000000-0000-0000-0000-000000000001
+@CHAT_ID=019aa524-c092-7d63-ae42-e72b6e0f735b
+
+### Get all dogs
+GET {{ASSISTANT_URL}}/dogs
+Accept: application/json
+
+### List all users
+GET {{ASSISTANT_URL}}/users
+Accept: application/json
+
+### List chats for a user
+GET {{ASSISTANT_URL}}/chats
+X-User-Id: {{USER_ID}}
+Accept: application/json
+
+### Fetch a specific chat
+GET {{ASSISTANT_URL}}/chats/{{CHAT_ID}}
+X-User-Id: {{USER_ID}}
+Accept: application/json
+
+### Ask the assistant (returns JSON)
+GET {{ASSISTANT_URL}}/ask?question={{QUESTION1}}
+X-User-Id: {{USER_ID}}
+Accept: application/json
+
+### Ask the assistant and continue an existing chat
+GET {{ASSISTANT_URL}}/ask?question={{QUESTION2}}&chatId={{CHAT_ID}}
+X-User-Id: {{USER_ID}}
+Accept: application/json

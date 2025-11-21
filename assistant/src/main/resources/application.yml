@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: proposal-assistant-service
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-5-nano
+          temperature: 1
+
+      embedding:
+        options:
+          model: text-embedding-3-small
+
+    mcp:
+      client:
+        sse:
+          connections:
+            scheduler:
+              url: ${MCP_SERVER_URL}
+
+    vectorstore:
+      pgvector:
+        dimensions: 1536
+        initialize-schema: false
+        schema-name: ${DB_SCHEMA}
+        table-name: vector_store
+
+    chat:
+      memory:
+        repository:
+          jdbc:
+            schema: ${DB_SCHEMA}
+            initialize-schema: never
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?applicationName=${spring.application.name}
+    hikari:
+      schema: ${DB_SCHEMA}
+
+  sql:
+    init:
+      mode: never
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: ${DB_SCHEMA}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: 8083
+  servlet:
+    context-path: /${spring.application.name}
+  shutdown: immediate

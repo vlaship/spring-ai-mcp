@@ -1,0 +1,74 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1763680136329-load-users
+      author: cascade
+      changes:
+        - loadData:
+            file: data/users.csv
+            relativeToChangelogFile: true
+            tableName: users
+            separator: ","
+            encoding: UTF-8
+            columns:
+              - column:
+                  name: user_id
+                  header: user_id
+                  type: UUID
+              - column:
+                  name: name
+                  header: name
+                  type: STRING
+  - changeSet:
+      id: 1763680139351-load-dogs
+      author: cascade
+      changes:
+        - loadData:
+            file: data/dogs.csv
+            relativeToChangelogFile: true
+            tableName: dogs
+            separator: ","
+            encoding: UTF-8
+            columns:
+              - column:
+                  header: dog_id
+                  name: dog_id
+                  type: UUID
+              - column:
+                  header: name
+                  name: name
+                  type: STRING
+              - column:
+                  header: owner
+                  name: owner
+                  type: STRING
+              - column:
+                  header: description
+                  name: description
+                  type: STRING
+  - changeSet:
+       id: 1763680144454-load-vector-store
+       author: cascade
+       changes:
+         - loadData:
+             file: data/vector_store.csv
+             relativeToChangelogFile: true
+             tableName: vector_store
+             separator: ","
+             encoding: UTF-8
+             columns:
+               - column:
+                   header: id
+                   name: id
+                   type: UUID
+               - column:
+                   header: content
+                   name: content
+                   type: STRING
+               - column:
+                   header: metadata
+                   name: metadata
+                   type: STRING
+               - column:
+                   header: embedding
+                   name: embedding
+                   type: STRING

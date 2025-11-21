@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pooch Palace Assistant</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <header class="sidebar__brand">
+            <p class="sidebar__eyebrow">Pooch Palace</p>
+            <h1>AI Adoption Concierge</h1>
+        </header>
+
+        <section class="sidebar__users">
+            <label for="userSelect">Choose a user</label>
+            <div class="select-wrapper">
+                <select id="userSelect" aria-label="Select user">
+                    <option value="" disabled selected>Loading users…</option>
+                </select>
+                <span class="select-caret">▾</span>
+            </div>
+            <p class="sidebar__hint">Users come from the assistant service.</p>
+        </section>
+
+        <button id="newChat" class="button button--primary" disabled>
+            + New Chat
+        </button>
+
+        <section class="sidebar__chats">
+            <div class="sidebar__chats-header">
+                <h2>Chats</h2>
+                <span id="chatCount" class="badge">0</span>
+            </div>
+            <div id="chatList" class="chat-list" aria-live="polite">
+                <div class="empty-state">
+                    Choose a user to view their chats.
+                </div>
+            </div>
+        </section>
+    </aside>
+
+    <main class="main-panel">
+        <section class="chat-panel" aria-live="polite">
+            <header class="chat-panel__header">
+                <div>
+                    <p class="chat-panel__eyebrow">Conversation</p>
+                    <h2 id="chatPanelTitle">Select a user to get started</h2>
+                </div>
+            </header>
+
+            <div id="chatHistory" class="chat-history">
+                <div class="empty-state empty-state--light">
+                    Choose a user, then start a new chat or open an existing one.
+                </div>
+            </div>
+
+            <form id="messageForm" class="message-form" novalidate>
+                <label class="sr-only" for="messageInput">Your message</label>
+                <textarea
+                        id="messageInput"
+                        name="message"
+                        rows="3"
+                        placeholder="Type a message and press Enter to send. Shift + Enter for a new line."
+                        disabled
+                ></textarea>
+                <div class="message-form__actions">
+                    <button id="sendMessage" class="button button--primary" type="submit" disabled>
+                        Send
+                    </button>
+                    <span id="composerStatus" class="action-status">
+                        <span id="composerStatusSpinner" class="spinner" aria-hidden="true" hidden></span>
+                        <span id="composerStatusText" class="action-status__label">Idle</span>
+                    </span>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+<script src="app.js" defer></script>
+</body>
+</html>

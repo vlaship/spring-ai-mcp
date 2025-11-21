@@ -1,0 +1,616 @@
+const DEFAULT_ASSISTANT_BASE_URL = "http://localhost:8083/proposal-assistant-service";
+
+const API_BASE_URL = normalizeBaseUrl(
+    window.UI_CONFIG?.assistantBaseUrl ?? inferAssistantBaseUrl()
+);
+
+const userSelect = document.getElementById("userSelect");
+const chatList = document.getElementById("chatList");
+const chatCount = document.getElementById("chatCount");
+const newChatButton = document.getElementById("newChat");
+const chatPanelTitle = document.getElementById("chatPanelTitle");
+const composerStatus = document.getElementById("composerStatus");
+const composerStatusSpinner = document.getElementById("composerStatusSpinner");
+const composerStatusText = document.getElementById("composerStatusText");
+const chatHistory = document.getElementById("chatHistory");
+const messageForm = document.getElementById("messageForm");
+const messageInput = document.getElementById("messageInput");
+const sendButton = document.getElementById("sendMessage");
+
+const state = {
+    users: [],
+    chats: [],
+    selectedUserId: null,
+    selectedChatId: null,
+    historyByChatId: {},
+    isSending: false,
+    isComposingNewChat: false,
+};
+
+const DRAFT_CHAT_KEY = "__draft";
+const MAX_HISTORY_MESSAGES = 40;
+
+function setComposerStatus(text, options = {}) {
+    const { busy = false } = options;
+    if (composerStatusText) {
+        composerStatusText.textContent = text;
+    }
+    if (composerStatusSpinner) {
+        composerStatusSpinner.hidden = !busy;
+    }
+    composerStatus?.classList.toggle("action-status--busy", busy);
+}
+
+init();
+
+function init() {
+    attachEventListeners();
+    resetChatPanel();
+    loadUsers();
+}
+
+function attachEventListeners() {
+    userSelect.addEventListener("change", (event) => {
+        const userId = event.target.value;
+        state.selectedUserId = userId || null;
+        newChatButton.disabled = !state.selectedUserId;
+
+        if (state.selectedUserId) {
+            state.historyByChatId = {};
+            state.selectedChatId = null;
+            state.isComposingNewChat = true;
+            state.historyByChatId[DRAFT_CHAT_KEY] = [];
+            prepareChatPanelForUser();
+            loadChats(state.selectedUserId);
+        } else {
+            resetChatsView();
+            resetChatPanel();
+        }
+    });
+
+    newChatButton.addEventListener("click", () => {
+        if (!state.selectedUserId) {
+            return;
+        }
+        beginNewChatSession();
+    });
+
+    chatList.addEventListener("click", (event) => {
+        const card = event.target.closest(".chat-card");
+        if (!card) {
+            return;
+        }
+        const chatId = card.dataset.chatId;
+        if (!chatId) {
+            return;
+        }
+        const chat = state.chats.find((c) => c.chatId === chatId);
+        if (chat) {
+            selectExistingChat(chat);
+        }
+    });
+
+    chatHistory.addEventListener("scroll", () => {
+        // no-op retained for potential future behavior
+    });
+
+    messageForm.addEventListener("submit", handleMessageSubmit);
+    messageInput.addEventListener("keydown", handleMessageInputKeydown);
+    messageInput.addEventListener("input", updateSendButtonState);
+}
+
+async function loadUsers() {
+    setUserSelectLoading();
+
+    try {
+        const users = await fetchJson("/users");
+        state.users = users;
+        populateUserSelect(users);
+    } catch (error) {
+        console.error(error);
+        setUserSelectError(error.message);
+    }
+}
+
+function populateUserSelect(users) {
+    userSelect.innerHTML = "";
+
+    if (!users.length) {
+        const option = document.createElement("option");
+        option.textContent = "No users found";
+        option.disabled = true;
+        userSelect.appendChild(option);
+        userSelect.disabled = true;
+        return;
+    }
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a user";
+    placeholder.selected = true;
+    placeholder.disabled = true;
+    userSelect.appendChild(placeholder);
+
+    users.forEach((user) => {
+        const option = document.createElement("option");
+        option.value = user.userId;
+        option.textContent = user.name;
+        userSelect.appendChild(option);
+    });
+
+    userSelect.disabled = false;
+}
+
+function setUserSelectLoading() {
+    userSelect.innerHTML = "";
+    const option = document.createElement("option");
+    option.textContent = "Loading users…";
+    option.disabled = true;
+    option.selected = true;
+    userSelect.appendChild(option);
+    userSelect.disabled = true;
+}
+
+function setUserSelectError(message) {
+    userSelect.innerHTML = "";
+    const option = document.createElement("option");
+    option.textContent = `Failed to load users (${message})`;
+    option.disabled = true;
+    option.selected = true;
+    userSelect.appendChild(option);
+    userSelect.disabled = true;
+}
+
+async function loadChats(userId) {
+    renderChatPlaceholder("Loading chats…");
+
+    try {
+        const chats = await fetchJson("/chats", {
+            headers: {
+                "X-User-Id": userId,
+            },
+        });
+
+        state.chats = chats;
+        renderChats(chats);
+    } catch (error) {
+        console.error(error);
+        renderChatPlaceholder(`Failed to load chats: ${error.message}`);
+    }
+}
+
+function resetChatsView() {
+    state.chats = [];
+    chatCount.textContent = "0";
+    renderChatPlaceholder("Choose a user to view their chats.");
+}
+
+function renderChats(chats) {
+    chatList.innerHTML = "";
+    chatCount.textContent = chats.length;
+
+    if (!chats.length) {
+        renderChatPlaceholder("No chats yet. Start one to begin the conversation!");
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    const activeChatId = state.isComposingNewChat ? null : state.selectedChatId;
+
+    chats
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .forEach((chat) => {
+            const card = document.createElement("article");
+            card.className = "chat-card";
+            card.dataset.chatId = chat.chatId;
+            if (activeChatId && chat.chatId === activeChatId) {
+                card.classList.add("chat-card--active");
+            }
+
+            const title = document.createElement("h3");
+            title.className = "chat-card__title";
+            title.textContent = chat.title || "Untitled chat";
+
+            const message = document.createElement("p");
+            message.className = "chat-card__message";
+            message.textContent = chat.lastMessage || "No messages yet";
+
+            const timestamp = document.createElement("span");
+            timestamp.className = "chat-card__timestamp";
+            timestamp.textContent = formatTimestamp(chat.createdAt);
+
+            card.appendChild(title);
+            card.appendChild(message);
+            card.appendChild(timestamp);
+
+            fragment.appendChild(card);
+        });
+
+    chatList.appendChild(fragment);
+}
+
+function renderChatPlaceholder(message) {
+    chatList.innerHTML = "";
+    const placeholder = document.createElement("div");
+    placeholder.className = "empty-state";
+    placeholder.textContent = message;
+    chatList.appendChild(placeholder);
+}
+
+function formatTimestamp(value) {
+    if (!value) {
+        return "Unknown date";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
+}
+
+function resetChatPanel() {
+    chatPanelTitle.textContent = "Select a user to get started";
+    setComposerStatus("Idle");
+    state.historyByChatId[DRAFT_CHAT_KEY] = [];
+    renderChatHistory([], {
+        placeholder: "Choose a user, then start a new chat or open an existing one.",
+    });
+    messageInput.value = "";
+    state.isSending = false;
+    state.isComposingNewChat = false;
+    updateComposerState();
+}
+
+function prepareChatPanelForUser() {
+    chatPanelTitle.textContent = "Pick a chat or start a new one";
+    setComposerStatus("Ready");
+    renderChatHistory(getHistory(DRAFT_CHAT_KEY), {
+        placeholder: "Type a message to start a new chat or pick one on the left.",
+    });
+    updateComposerState();
+}
+
+function beginNewChatSession() {
+    state.selectedChatId = null;
+    state.isComposingNewChat = true;
+    state.historyByChatId[DRAFT_CHAT_KEY] = [];
+    chatPanelTitle.textContent = "New conversation";
+    setComposerStatus("Ready");
+    messageInput.value = "";
+    renderChatHistory(state.historyByChatId[DRAFT_CHAT_KEY], {
+        placeholder: "Say hello to begin the conversation.",
+    });
+    updateComposerState();
+    messageInput.focus();
+}
+
+async function selectExistingChat(chat) {
+    state.selectedChatId = chat.chatId;
+    state.isComposingNewChat = false;
+    chatPanelTitle.textContent = chat.title || "Untitled chat";
+    const cachedHistory = getHistory(chat.chatId);
+    if (cachedHistory.length) {
+        renderChatHistory(cachedHistory);
+    } else {
+        renderChatHistory([], {
+            placeholder: "Loading chat history…",
+        });
+    }
+    updateComposerState();
+
+    try {
+        const history = await fetchChatHistory(chat.chatId);
+        state.historyByChatId[chat.chatId] = history.map((message, index) => ({
+            id: `${chat.chatId}-${index}`,
+            role: normalizeRole(message.role),
+            content: message.content,
+            timestamp: message.timestamp,
+        }));
+        renderChatHistory(getHistory(chat.chatId), {
+            placeholder: "No messages yet. Start the conversation!",
+        });
+    } catch (error) {
+        console.error(error);
+        renderChatHistory([], {
+            placeholder: `Failed to load chat: ${error.message}`,
+        });
+    } finally {
+        focusMessageInput();
+    }
+}
+
+function focusMessageInput() {
+    if (messageInput) {
+        messageInput.focus();
+    }
+}
+
+function normalizeRole(role) {
+    if (!role) {
+        return "assistant";
+    }
+    const normalized = role.toLowerCase();
+    if (["assistant", "user", "system", "tool"].includes(normalized)) {
+        return normalized;
+    }
+    return "assistant";
+}
+
+async function fetchChatHistory(chatId) {
+    if (!state.selectedUserId) {
+        return [];
+    }
+    return fetchJson(`/chats/${chatId}`, {
+        headers: {
+            "X-User-Id": state.selectedUserId,
+        },
+    });
+}
+
+function getHistory(chatKey = getActiveHistoryKey()) {
+    if (!state.historyByChatId[chatKey]) {
+        state.historyByChatId[chatKey] = [];
+    }
+    return state.historyByChatId[chatKey];
+}
+
+function getActiveHistoryKey() {
+    return state.selectedChatId ?? DRAFT_CHAT_KEY;
+}
+
+function renderChatHistory(messages, options = {}) {
+    chatHistory.innerHTML = "";
+
+    if (!messages.length) {
+        const placeholder = document.createElement("div");
+        placeholder.className = "empty-state empty-state--light";
+        placeholder.textContent = options.placeholder || "No messages yet. Start the conversation!";
+        chatHistory.appendChild(placeholder);
+        return;
+    }
+
+    const visibleMessages = messages.slice(-MAX_HISTORY_MESSAGES);
+    const fragment = document.createDocumentFragment();
+
+    visibleMessages.forEach((message) => {
+        const bubble = document.createElement("article");
+        bubble.className = `chat-bubble chat-bubble--${message.role}`;
+
+        const roleLabel = document.createElement("header");
+        roleLabel.className = "chat-bubble__role";
+        roleLabel.textContent = formatRole(message.role);
+
+        const body = document.createElement("p");
+        body.className = "chat-bubble__text";
+        body.textContent = message.content;
+
+        bubble.appendChild(roleLabel);
+        bubble.appendChild(body);
+
+        if (message.timestamp) {
+            const time = document.createElement("time");
+            time.className = "chat-bubble__timestamp";
+            time.dateTime = message.timestamp;
+            time.textContent = formatBubbleTimestamp(message.timestamp);
+            bubble.appendChild(time);
+        }
+
+        fragment.appendChild(bubble);
+    });
+
+    chatHistory.appendChild(fragment);
+    scrollHistoryToBottom();
+}
+
+function formatRole(role) {
+    switch (role) {
+        case "assistant":
+            return "Assistant";
+        case "system":
+            return "System";
+        default:
+            return "You";
+    }
+}
+
+function formatBubbleTimestamp(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function scrollHistoryToBottom({ smooth = false } = {}) {
+    chatHistory.scrollTo({
+        top: chatHistory.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+    });
+}
+
+function canSendMessages() {
+    return Boolean(state.selectedUserId && (state.selectedChatId || state.isComposingNewChat));
+}
+
+function updateComposerState() {
+    const enabled = canSendMessages();
+    messageInput.disabled = !enabled || state.isSending;
+    updateSendButtonState();
+}
+
+function updateSendButtonState() {
+    const hasText = Boolean(messageInput.value.trim());
+    const enabled = canSendMessages() && hasText && !state.isSending;
+    sendButton.disabled = !enabled;
+}
+
+function handleMessageInputKeydown(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        messageForm.requestSubmit();
+    }
+}
+
+async function handleMessageSubmit(event) {
+    event.preventDefault();
+    const question = messageInput.value.trim();
+
+    if (!question || state.isSending || !canSendMessages()) {
+        return;
+    }
+
+    await sendMessage(question);
+}
+
+async function sendMessage(question) {
+    const historyKey = getActiveHistoryKey();
+    addMessageToHistory("user", question, historyKey);
+    messageInput.value = "";
+    renderChatHistory(getHistory(historyKey));
+    state.isSending = true;
+    setComposerStatus("Thinking...", { busy: true });
+    updateComposerState();
+
+    try {
+        const params = new URLSearchParams({ question });
+        if (state.selectedChatId) {
+            params.append("chatId", state.selectedChatId);
+        }
+
+        const response = await fetchJson(`/ask?${params.toString()}`, {
+            headers: {
+                "X-User-Id": state.selectedUserId,
+            },
+        });
+
+        handleAskSuccess(response, historyKey);
+        setComposerStatus("Ready");
+    } catch (error) {
+        console.error(error);
+        addMessageToHistory("system", `Failed to send message: ${error.message}`, historyKey);
+        setComposerStatus("Error");
+        renderChatHistory(getHistory(historyKey));
+    } finally {
+        state.isSending = false;
+        updateComposerState();
+    }
+}
+
+function handleAskSuccess(response, previousHistoryKey) {
+    const { chatId, answer } = response;
+    if (!chatId) {
+        return;
+    }
+
+    if (!state.selectedChatId) {
+        // Move draft history under the newly created chat id
+        state.historyByChatId[chatId] = state.historyByChatId[previousHistoryKey] ?? [];
+        if (previousHistoryKey !== chatId) {
+            delete state.historyByChatId[previousHistoryKey];
+        }
+        state.selectedChatId = chatId;
+        state.isComposingNewChat = false;
+    }
+
+    addMessageToHistory("assistant", answer, chatId);
+    renderChatHistory(getHistory(chatId));
+
+    loadChats(state.selectedUserId).then(() => {
+        const activeChat = state.chats.find((chat) => chat.id === state.selectedChatId);
+        if (activeChat) {
+            chatPanelTitle.textContent = activeChat.title || "Untitled chat";
+        }
+    });
+}
+
+function addMessageToHistory(role, content, chatKey) {
+    const history = getHistory(chatKey);
+    history.push({
+        id: crypto?.randomUUID?.() ?? `${Date.now()}-${history.length}`,
+        role,
+        content,
+        timestamp: new Date().toISOString(),
+    });
+}
+
+function inferAssistantBaseUrl() {
+    const { hostname, origin, protocol } = window.location;
+
+    const isFileOrigin = protocol === "file:" || origin?.startsWith("file://");
+    if (!origin || origin === "null" || isFileOrigin) {
+        return DEFAULT_ASSISTANT_BASE_URL;
+    }
+
+    if (isLocalHostname(hostname)) {
+        return DEFAULT_ASSISTANT_BASE_URL;
+    }
+
+    return `${origin}/proposal-assistant-service`;
+}
+
+function isLocalHostname(hostname = "") {
+    const normalized = hostname.toLowerCase();
+
+    if (
+        normalized === "" ||
+        normalized === "localhost" ||
+        normalized === "127.0.0.1" ||
+        normalized === "::1" ||
+        normalized === "0.0.0.0"
+    ) {
+        return true;
+    }
+
+    if (
+        normalized.startsWith("192.168.") ||
+        normalized.startsWith("10.") ||
+        normalized.startsWith("172.") ||
+        normalized.endsWith(".local")
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+function normalizeBaseUrl(value) {
+    if (!value) {
+        return "";
+    }
+
+    return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+async function fetchJson(path, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: {
+            "Accept": "application/json",
+            ...(options.headers ?? {}),
+        },
+    });
+
+    if (!response.ok) {
+        const message = await tryReadError(response);
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+async function tryReadError(response) {
+    try {
+        const body = await response.json();
+        if (body?.message) {
+            return body.message;
+        }
+    } catch (error) {
+        // ignore JSON parsing errors
+    }
+    return `${response.status} ${response.statusText}`;
+}

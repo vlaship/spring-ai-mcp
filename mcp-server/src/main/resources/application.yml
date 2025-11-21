@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: proposal-mcp-service
+#  ai:
+#    mcp:
+#      server:
+#        sse-endpoint: /${spring.application.name}/sse
+
+server:
+  port: 8082
+  shutdown: immediate
