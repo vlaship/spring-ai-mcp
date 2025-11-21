@@ -24,7 +24,6 @@
 
         <lombok.version>1.18.42</lombok.version>
 		<jackson.uuid.version>5.1.1</jackson.uuid.version>
-		<jspecify.version>1.0.0</jspecify.version>
 	</properties>
 
 	<dependencies>
@@ -76,7 +75,6 @@
 		<dependency>
 			<groupId>org.jspecify</groupId>
 			<artifactId>jspecify</artifactId>
-			<version>${jspecify.version}</version>
 			<scope>provided</scope>
 		</dependency>
         <dependency>
