@@ -27,7 +27,7 @@ public class ChatAssistantService {
 
     @Transactional
     public AnswerResponse ask(UUID userId, String sanitizedQuestion, @Nullable UUID chatId) {
-        log.debug("Processing ask request for user={} chat={}", userId, chatId);
+        log.debug("Processing ask request for userId={} chatId={}", userId, chatId);
         var resolvedChat = resolveChat(chatId, userId, sanitizedQuestion);
 
         var answer = dogAssistantChatClient
@@ -37,7 +37,7 @@ public class ChatAssistantService {
                 .content();
 
         chatRepository.save(resolvedChat.withLastMessage(answer));
-        log.info("Generated response for chat={} (user={})", resolvedChat.chatId(), userId);
+        log.debug("Generated response for chatId={} (userId={})", resolvedChat.chatId(), userId);
 
         return new AnswerResponse(resolvedChat.chatId(), answer);
     }
@@ -48,7 +48,7 @@ public class ChatAssistantService {
             return chatRepository.save(chat);
         }
 
-        log.debug("Resolving existing chat {} for user={}", chatId, userId);
+        log.debug("Resolving existing chat {} for userId={}", chatId, userId);
         var chat = chatDirectoryService.findChat(userId, chatId);
         return chat.withLastMessage(firstMessage);
     }

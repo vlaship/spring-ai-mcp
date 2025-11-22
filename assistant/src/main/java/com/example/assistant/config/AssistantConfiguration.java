@@ -68,7 +68,7 @@ public class AssistantConfiguration {
         return _ -> {
             List<Document> dogs = repository.findAll()
                     .stream()
-                    .map(dog -> new Document("chatId: %s, name: %s, description: %s".formatted(
+                    .map(dog -> new Document("id: %s, name: %s, description: %s".formatted(
                             dog.dogId(), dog.name(), dog.description()
                     )))
                     .toList();

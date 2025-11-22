@@ -11,10 +11,8 @@ spring:
 
     vectorstore:
       pgvector:
-        dimensions: 1536
         initialize-schema: false
         schema-name: ${DB_SCHEMA}
-        table-name: vector_store
 
     chat:
       memory:
@@ -56,3 +54,7 @@ server:
   servlet:
     context-path: /${spring.application.name}
   shutdown: immediate
+
+logging:
+  level:
+    com.example: debug

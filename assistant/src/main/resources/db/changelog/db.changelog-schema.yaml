@@ -133,11 +133,40 @@ databaseChangeLog:
               CREATE EXTENSION IF NOT EXISTS vector;
 
   - changeSet:
-      id: 1763680128226-create-vector-store
+      id: 1763680128226-create-small-vector-store
       author: cascade
       changes:
         - createTable:
-            tableName: vector_store
+            tableName: vector_store_small
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: content
+                  type: text
+              - column:
+                  name: metadata
+                  type: jsonb
+              - column:
+                  name: embedding
+                  type: vector(768)
+        - sql:
+            sql: |
+              CREATE INDEX vector_store_small_idx
+              ON vector_store_small
+              USING ivfflat (embedding vector_cosine_ops)
+              WITH (lists = 100);
+
+  - changeSet:
+      id: 1763680128226-create-large-vector-store
+      author: cascade
+      changes:
+        - createTable:
+            tableName: vector_store_large
             columns:
               - column:
                   name: id
@@ -155,9 +184,9 @@ databaseChangeLog:
                   name: embedding
                   type: vector(1536)
         - sql:
-            comment: "Use pgvector's IVFFlat index for embeddings"
             sql: |
-              CREATE INDEX spring_ai_vector_index
-              ON vector_store
+              CREATE INDEX vector_store_large_idx
+              ON vector_store_large
               USING ivfflat (embedding vector_cosine_ops)
-              WITH (lists = 100);
+              WITH (lists = 200);
+

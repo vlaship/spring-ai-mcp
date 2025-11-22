@@ -33,5 +33,6 @@ build/
 .vscode/
 
 ### MISC ###
-pgdata
+pgdata/
 .env
+ollama/
