@@ -34,9 +34,16 @@ public class AssistantConfiguration {
             ChatClient.Builder builder
     ) {
         return builder
-                .defaultSystem(AssistantConstants.SYSTEM_PROMPT)
+                .defaultSystem(AssistantConstants.ASSISTANT_SYSTEM_PROMPT)
                 .defaultAdvisors(questionAnswerAdvisor, promptChatMemoryAdvisor)
                 .defaultToolCallbacks(syncMcpToolCallbackProvider)
+                .build();
+    }
+
+    @Bean("summarizeClient")
+    ChatClient summarizeClient(ChatClient.Builder builder) {
+        return builder
+                .defaultSystem(AssistantConstants.SUMMARY_SYSTEM_PROMPT)
                 .build();
     }
 
