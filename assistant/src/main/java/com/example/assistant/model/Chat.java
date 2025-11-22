@@ -1,6 +1,5 @@
 package com.example.assistant.model;
 
-import static com.example.assistant.AssistantConstants.DEFAULT_CHAT_TITLE;
 import static com.example.assistant.AssistantConstants.MAX_LAST_MESSAGE_CHARACTERS;
 
 import org.springframework.data.annotation.Id;
@@ -27,11 +26,15 @@ public record Chat(
         return new Chat(this.chatId, this.userId, this.title, trim(newMessage), this.createdAt);
     }
 
+    public Chat withTitle(String newTitle) {
+        return new Chat(this.chatId, this.userId, newTitle, this.lastMessage, this.createdAt);
+    }
+
     public static Chat newChat(
             UUID userId,
             String lastMessage
     ) {
-        return new Chat(null, userId, DEFAULT_CHAT_TITLE, trim(lastMessage), Instant.now());
+        return new Chat(null, userId, null, trim(lastMessage), Instant.now());
     }
 
     private static String trim(String text) {

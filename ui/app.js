@@ -521,7 +521,7 @@ function handleAskSuccess(response, previousHistoryKey) {
     renderChatHistory(getHistory(chatId));
 
     loadChats(state.selectedUserId).then(() => {
-        const activeChat = state.chats.find((chat) => chat.id === state.selectedChatId);
+        const activeChat = state.chats.find((chat) => chat.chatId === state.selectedChatId);
         if (activeChat) {
             chatPanelTitle.textContent = activeChat.title || "Untitled chat";
         }

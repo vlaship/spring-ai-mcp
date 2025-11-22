@@ -22,12 +22,7 @@ GET {{ASSISTANT_URL}}/chats/{{CHAT_ID}}
 X-User-Id: {{USER_ID}}
 Accept: application/json
 
-### Ask the assistant (returns JSON)
-GET {{ASSISTANT_URL}}/ask?question={{QUESTION1}}
-X-User-Id: {{USER_ID}}
-Accept: application/json
-
 ### Ask the assistant and continue an existing chat
-GET {{ASSISTANT_URL}}/ask?question={{QUESTION2}}&chatId={{CHAT_ID}}
+GET {{ASSISTANT_URL}}/ask?question={{QUESTION1}}
 X-User-Id: {{USER_ID}}
 Accept: application/json
