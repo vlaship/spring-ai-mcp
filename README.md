@@ -61,6 +61,7 @@ Demo workspace for building AI-assisted workflows at **Pooch Palace**, a fiction
 * Plain HTML + vanilla JS (no build step).
 * Fetches `/users` to populate a dropdown, loads chats per user, and keeps per-chat history caches client-side (@ui/app.js#102-405).
 * Sends messages via `/ask`, automatically linking newly created chats to the conversation once a response arrives (@ui/app.js#470-529).
+* Includes a day/dark theme toggle that persists the selection in `localStorage` and updates all UI surfaces via CSS variables (@ui/app.js#16-711, @ui/styles.css#1-469, @ui/index.html#11-55).
 * To host locally, serve the `ui/` directory with any static server (e.g., `npx http-server ui`).
 
 ## Local setup
