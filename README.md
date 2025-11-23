@@ -70,6 +70,13 @@ Demo workspace for building AI-assisted workflows at **Pooch Palace**, a fiction
 * Java 25, Maven 3.9+
 * Docker Desktop (for Postgres + Ollama)
 * Optional: OpenAI API key
+* Postgres role with privileges to run schema/extension setup:
+
+  ```sql
+  CREATE SCHEMA IF NOT EXISTS ${DB_SCHEMA};
+
+  CREATE EXTENSION IF NOT EXISTS vector;
+  ```
 
 ### 1. Configure environment
 
