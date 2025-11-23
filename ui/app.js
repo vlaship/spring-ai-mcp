@@ -9,9 +9,6 @@ const chatList = document.getElementById("chatList");
 const chatCount = document.getElementById("chatCount");
 const newChatButton = document.getElementById("newChat");
 const chatPanelTitle = document.getElementById("chatPanelTitle");
-const composerStatus = document.getElementById("composerStatus");
-const composerStatusSpinner = document.getElementById("composerStatusSpinner");
-const composerStatusText = document.getElementById("composerStatusText");
 const chatHistory = document.getElementById("chatHistory");
 const messageForm = document.getElementById("messageForm");
 const messageInput = document.getElementById("messageInput");
@@ -25,21 +22,12 @@ const state = {
     historyByChatId: {},
     isSending: false,
     isComposingNewChat: false,
+    pendingAssistantByChatId: {},
+    pendingAssistantIntervals: {},
 };
 
 const DRAFT_CHAT_KEY = "__draft";
 const MAX_HISTORY_MESSAGES = 40;
-
-function setComposerStatus(text, options = {}) {
-    const { busy = false } = options;
-    if (composerStatusText) {
-        composerStatusText.textContent = text;
-    }
-    if (composerStatusSpinner) {
-        composerStatusSpinner.hidden = !busy;
-    }
-    composerStatus?.classList.toggle("action-status--busy", busy);
-}
 
 init();
 
@@ -57,6 +45,9 @@ function attachEventListeners() {
 
         if (state.selectedUserId) {
             state.historyByChatId = {};
+            clearAllPendingAssistantAnimations();
+            state.pendingAssistantByChatId = {};
+            state.pendingAssistantIntervals = {};
             state.selectedChatId = null;
             state.isComposingNewChat = true;
             state.historyByChatId[DRAFT_CHAT_KEY] = [];
@@ -255,8 +246,10 @@ function formatTimestamp(value) {
 
 function resetChatPanel() {
     chatPanelTitle.textContent = "Select a user to get started";
-    setComposerStatus("Idle");
     state.historyByChatId[DRAFT_CHAT_KEY] = [];
+    clearAllPendingAssistantAnimations();
+    state.pendingAssistantByChatId = {};
+    state.pendingAssistantIntervals = {};
     renderChatHistory([], {
         placeholder: "Choose a user, then start a new chat or open an existing one.",
     });
@@ -268,7 +261,6 @@ function resetChatPanel() {
 
 function prepareChatPanelForUser() {
     chatPanelTitle.textContent = "Pick a chat or start a new one";
-    setComposerStatus("Ready");
     renderChatHistory(getHistory(DRAFT_CHAT_KEY), {
         placeholder: "Type a message to start a new chat or pick one on the left.",
     });
@@ -279,8 +271,12 @@ function beginNewChatSession() {
     state.selectedChatId = null;
     state.isComposingNewChat = true;
     state.historyByChatId[DRAFT_CHAT_KEY] = [];
+    const pendingId = state.pendingAssistantByChatId[DRAFT_CHAT_KEY];
+    if (pendingId) {
+        stopPendingStatusAnimation(pendingId);
+    }
+    delete state.pendingAssistantByChatId[DRAFT_CHAT_KEY];
     chatPanelTitle.textContent = "New conversation";
-    setComposerStatus("Ready");
     messageInput.value = "";
     renderChatHistory(state.historyByChatId[DRAFT_CHAT_KEY], {
         placeholder: "Say hello to begin the conversation.",
@@ -310,6 +306,7 @@ async function selectExistingChat(chat) {
             role: normalizeRole(message.role),
             content: message.content,
             timestamp: message.timestamp,
+            status: "complete",
         }));
         renderChatHistory(getHistory(chat.chatId), {
             placeholder: "No messages yet. Start the conversation!",
@@ -380,6 +377,7 @@ function renderChatHistory(messages, options = {}) {
     visibleMessages.forEach((message) => {
         const bubble = document.createElement("article");
         bubble.className = `chat-bubble chat-bubble--${message.role}`;
+        bubble.dataset.messageId = message.id;
 
         const roleLabel = document.createElement("header");
         roleLabel.className = "chat-bubble__role";
@@ -388,6 +386,18 @@ function renderChatHistory(messages, options = {}) {
         const body = document.createElement("p");
         body.className = "chat-bubble__text";
         body.textContent = message.content;
+
+        if (message.status === "pending") {
+            const inlineStatus = document.createElement("span");
+            inlineStatus.className = "chat-bubble__inline-status";
+
+            const statusText = document.createElement("span");
+            statusText.className = "chat-bubble__inline-status-text";
+            statusText.textContent = "Thinking";
+
+            inlineStatus.appendChild(statusText);
+            body.appendChild(inlineStatus);
+        }
 
         bubble.appendChild(roleLabel);
         bubble.appendChild(body);
@@ -470,10 +480,13 @@ async function handleMessageSubmit(event) {
 async function sendMessage(question) {
     const historyKey = getActiveHistoryKey();
     addMessageToHistory("user", question, historyKey);
+    const placeholder = addAssistantPlaceholder(historyKey);
     messageInput.value = "";
     renderChatHistory(getHistory(historyKey));
+    if (placeholder) {
+        startPendingStatusAnimation(placeholder.id);
+    }
     state.isSending = true;
-    setComposerStatus("Thinking...", { busy: true });
     updateComposerState();
 
     try {
@@ -489,11 +502,10 @@ async function sendMessage(question) {
         });
 
         handleAskSuccess(response, historyKey);
-        setComposerStatus("Ready");
     } catch (error) {
         console.error(error);
+        clearAssistantPlaceholder(historyKey);
         addMessageToHistory("system", `Failed to send message: ${error.message}`, historyKey);
-        setComposerStatus("Error");
         renderChatHistory(getHistory(historyKey));
     } finally {
         state.isSending = false;
@@ -513,11 +525,17 @@ function handleAskSuccess(response, previousHistoryKey) {
         if (previousHistoryKey !== chatId) {
             delete state.historyByChatId[previousHistoryKey];
         }
+        if (state.pendingAssistantByChatId[previousHistoryKey]) {
+            state.pendingAssistantByChatId[chatId] = state.pendingAssistantByChatId[previousHistoryKey];
+            delete state.pendingAssistantByChatId[previousHistoryKey];
+        }
         state.selectedChatId = chatId;
         state.isComposingNewChat = false;
     }
 
-    addMessageToHistory("assistant", answer, chatId);
+    if (!resolveAssistantPlaceholder(chatId, answer)) {
+        addMessageToHistory("assistant", answer, chatId);
+    }
     renderChatHistory(getHistory(chatId));
 
     loadChats(state.selectedUserId).then(() => {
@@ -528,13 +546,99 @@ function handleAskSuccess(response, previousHistoryKey) {
     });
 }
 
-function addMessageToHistory(role, content, chatKey) {
+function addMessageToHistory(role, content, chatKey, overrides = {}) {
     const history = getHistory(chatKey);
-    history.push({
+    const entry = {
         id: crypto?.randomUUID?.() ?? `${Date.now()}-${history.length}`,
         role,
         content,
-        timestamp: new Date().toISOString(),
+        status: overrides.status ?? "complete",
+        timestamp:
+            overrides.hasOwnProperty("timestamp") && overrides.timestamp !== undefined
+                ? overrides.timestamp
+                : new Date().toISOString(),
+    };
+    history.push(entry);
+    return entry;
+}
+
+function addAssistantPlaceholder(chatKey) {
+    const entry = addMessageToHistory("assistant", "", chatKey, {
+        status: "pending",
+        timestamp: null,
+    });
+    state.pendingAssistantByChatId[chatKey] = entry.id;
+    return entry;
+}
+
+function resolveAssistantPlaceholder(chatKey, answer) {
+    const pendingId = state.pendingAssistantByChatId[chatKey];
+    if (!pendingId) {
+        return false;
+    }
+
+    const history = getHistory(chatKey);
+    const entry = history.find((message) => message.id === pendingId);
+    if (!entry) {
+        delete state.pendingAssistantByChatId[chatKey];
+        return false;
+    }
+
+    entry.content = answer;
+    entry.status = "complete";
+    entry.timestamp = new Date().toISOString();
+    stopPendingStatusAnimation(entry.id);
+    delete state.pendingAssistantByChatId[chatKey];
+    return true;
+}
+
+function clearAssistantPlaceholder(chatKey) {
+    const pendingId = state.pendingAssistantByChatId[chatKey];
+    if (!pendingId) {
+        return;
+    }
+    const history = getHistory(chatKey);
+    const index = history.findIndex((message) => message.id === pendingId);
+    if (index >= 0) {
+        history.splice(index, 1);
+    }
+    stopPendingStatusAnimation(pendingId);
+    delete state.pendingAssistantByChatId[chatKey];
+}
+
+function startPendingStatusAnimation(messageId) {
+    if (!messageId) {
+        return;
+    }
+    stopPendingStatusAnimation(messageId);
+    let frame = 0;
+    const updateText = () => {
+        const statusText = chatHistory.querySelector(
+            `[data-message-id="${messageId}"] .chat-bubble__inline-status-text`
+        );
+        if (!statusText) {
+            return;
+        }
+        const dots = ".".repeat((frame % 3) + 1);
+        statusText.textContent = `Thinking${dots}`;
+        frame += 1;
+    };
+    updateText();
+    state.pendingAssistantIntervals[messageId] = window.setInterval(updateText, 500);
+}
+
+function stopPendingStatusAnimation(messageId) {
+    const timerId = state.pendingAssistantIntervals[messageId];
+    if (timerId) {
+        window.clearInterval(timerId);
+        delete state.pendingAssistantIntervals[messageId];
+    }
+}
+
+function clearAllPendingAssistantAnimations() {
+    Object.keys(state.pendingAssistantIntervals).forEach((messageId) => {
+        window.clearInterval(state.pendingAssistantIntervals[messageId]);
+        delete state.pendingAssistantIntervals[messageId];
     });
 }
 
