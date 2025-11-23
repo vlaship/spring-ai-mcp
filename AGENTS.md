@@ -28,6 +28,13 @@ This repository hosts two cooperating Spring Boot applications (plus a lightweig
   * Registers MCP tool callbacks so the assistant can invoke remote tools (e.g., scheduling) while responding.
   * Generates short, title-case chat titles by calling a dedicated `summarizeClient` when a conversation is first saved (@assistant/src/main/java/com/example/assistant/service/ChatAssistantService.java#31-93).
 * **Data flow**: Dog data lives in the application database. When the `embedding` profile is active, an `ApplicationRunner` pushes dog records into the vector store for retrieval-augmented answers.
+* **Database prerequisites**: Before running the assistant, ensure the target Postgres database has the application schema and pgvector extension created:
+
+  ```sql
+  CREATE SCHEMA IF NOT EXISTS ${DB_SCHEMA};
+
+  CREATE EXTENSION IF NOT EXISTS vector;
+  ```
 
 ## Scheduler MCP service (`mcp-server/`)
 

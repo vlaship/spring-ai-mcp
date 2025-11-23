@@ -4,7 +4,7 @@ databaseChangeLog:
       author: cascade
       changes:
         - loadData:
-            file: data/users.csv
+            file: ../data/users.csv
             relativeToChangelogFile: true
             tableName: users
             separator: ","
@@ -24,7 +24,7 @@ databaseChangeLog:
       author: cascade
       changes:
         - loadData:
-            file: data/dogs.csv
+            file: ../data/dogs.csv
             relativeToChangelogFile: true
             tableName: dogs
             separator: ","
@@ -53,7 +53,7 @@ databaseChangeLog:
 #       author: cascade
 #       changes:
 #         - loadData:
-#             file: data/vector_store.csv
+#             file: ../data/vector_store.csv
 #             relativeToChangelogFile: true
 #             tableName: vector_store_large
 #             separator: ","

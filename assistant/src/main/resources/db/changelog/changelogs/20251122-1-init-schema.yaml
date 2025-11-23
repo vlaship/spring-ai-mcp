@@ -121,15 +121,6 @@ databaseChangeLog:
                   name: timestamp
 
   - changeSet:
-      id: 1763680127000-enable-pgvector
-      author: cascade
-      changes:
-        - sql:
-            comment: "Ensure pgvector extension is available before using vector columns"
-            sql: |
-              CREATE EXTENSION IF NOT EXISTS vector;
-
-  - changeSet:
       id: 1763680128226-create-small-vector-store
       author: cascade
       changes:
