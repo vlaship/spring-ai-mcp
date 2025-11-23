@@ -9,7 +9,8 @@ spring:
 
       chat:
         options:
-          model: llama3.2:3b
+          # model: gpt-oss:20b
+         model: llama3.2:3b
 
       embedding:
         options:

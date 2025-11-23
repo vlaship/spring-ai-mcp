@@ -58,3 +58,4 @@ server:
 logging:
   level:
     com.example: debug
+    org.springframework.ai: debug
