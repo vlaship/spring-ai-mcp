@@ -29,12 +29,14 @@ public class ChatAssistantService {
     private final ChatDirectoryService chatDirectoryService;
 
     @Transactional
-    public AnswerResponse ask(UUID userId, String sanitizedQuestion, @Nullable UUID chatId) {
+    public AnswerResponse ask(UUID userId, String question, @Nullable UUID chatId) {
         log.debug("Processing ask request for userId={} chatId={}", userId, chatId);
+
+        var sanitizedQuestion = StringUtils.trimToEmpty(question);
         var resolvedChat = resolveChat(chatId, userId, sanitizedQuestion);
 
         var answer = dogAssistantChatClient
-                .prompt(sanitizedQuestion)
+                .prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, resolvedChat.chatId().toString()))
                 .call()
                 .content();

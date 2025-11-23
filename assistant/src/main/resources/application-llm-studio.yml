@@ -1,0 +1,35 @@
+spring:
+  ai:
+    # -------------------------------------
+    # LM STUDIO (OpenAI-compatible backend)
+    # -------------------------------------
+    openai:
+      base-url: http://127.0.0.1:12345/v1   # LM Studio Local Server port 12345
+      api-key: dummy                        # LM Studio ignores the key
+
+      chat:
+        options:
+          model: deepseek/deepseek-r1-0528-qwen3-8b         # Chat model
+#          model: openai/gpt-oss-20b         # Chat model
+          temperature: 0.7
+          max-tokens: -1
+          reasoning-effort: low
+
+      embedding:
+        options:
+          model: text-embedding-nomic-embed-text-v1.5
+
+    # -------------------------------------
+    # Default model mapping
+    # -------------------------------------
+    model:
+      chat: openai        # LM Studio for chat
+      embedding: openai   # LM Studio for embeddings
+
+    # -------------------------------------
+    # Vector store PGVector
+    # -------------------------------------
+    vectorstore:
+      pgvector:
+        dimensions: 768   # Correct for Nomic-Embed v1.5
+        table-name: vector_store_small

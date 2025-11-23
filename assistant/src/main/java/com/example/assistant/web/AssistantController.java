@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,11 +41,7 @@ public class AssistantController {
             @RequestParam("question") @NotBlank String question,
             @RequestParam(value = "chatId", required = false) UUID chatId
     ) {
-
-        var sanitizedQuestion = question.trim();
-
-        var result = chatAssistantService.ask(userId, sanitizedQuestion, chatId);
-
+        var result = chatAssistantService.ask(userId, question, chatId);
         return ResponseEntity.ok(new AnswerResponse(result.chatId(), result.answer()));
     }
 }

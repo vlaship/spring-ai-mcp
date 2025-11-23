@@ -1,43 +1,49 @@
 # Agents Overview
 
-This repository hosts two cooperating Spring Boot applications that demonstrate how to build AI-assisted workflows for a fictional dog adoption agency, **Pooch Palace**.
+This repository hosts two cooperating Spring Boot applications (plus a lightweight UI) that demonstrate how to build AI-assisted workflows for a fictional dog adoption agency, **Pooch Palace**.
 
 ## Repository layout
 
 | Folder | Description |
 | --- | --- |
-| `assistant/` | Spring Boot web application that exposes REST endpoints and an AI chat assistant powered by Spring AI. |
-| `scheduler/` | Spring Boot application that exposes MCP tools—currently a scheduling tool that downstream agents can call to book adoption pickups. |
+| `assistant/` | Spring Boot web application that exposes REST endpoints and an AI chat assistant powered by Spring AI plus a chat-directory API for the UI. |
+| `mcp-server/` | Spring Boot application that exposes MCP tools—currently a scheduling tool that downstream agents can call to book adoption pickups. |
+| `ui/` | Static HTML/JS console that exercises the assistant/chat directory APIs. |
 | `http/` | Example HTTP requests for manual testing. |
 | `pgdata/` | Local PostgreSQL volume used by pgvector. |
 | `.env`, `docker-compose.yaml` | Helper files for local infrastructure (PostgreSQL vector store + supporting services). |
 
 ## Assistant application (`assistant/`)
 
-* **Purpose**: Provide an AI assistant that helps prospective adopters find available dogs and ask questions.
-* **Endpoints**:
-  * `GET /dogs` – returns all dogs from the repository.
-  * `GET /{user}/ask?question=...` – forwards the user question to the AI assistant while scoping conversation history to `{user}`.
+* **Purpose**: Provide an AI assistant that helps prospective adopters find available dogs, ask follow-up questions, and keep a persistent conversation history.
+* **Primary endpoints**:
+  * `GET /dogs` – lists all dogs in the repository.
+  * `GET /ask?question=...` – routes the user’s question through the assistant. Requires the `X-User-Id` header and optional `chatId` to scope chat memory.
+* **Chat directory endpoints** (consumed by the UI):
+  * `GET /users` – lists all known demo users.
+  * `GET /chats` – lists chats for the requesting user (via `X-User-Id`).
+  * `GET /chats/{chatId}` – returns the persisted message history for a chat.
 * **Chat configuration**:
-  * Uses `ChatClient` with a dog-adoption–specific system prompt and two advisors: `QuestionAnswerAdvisor` (vector-store grounding) and `PromptChatMemoryAdvisor` (conversation memory backed by JDBC + pgvector).
-  * Registers Spring AI MCP tool callbacks so the assistant can call external tools (such as the scheduler service) when responding.
-* **Data flow**: Dog data is stored in the application database. When the `embedding` profile is active, an `ApplicationRunner` pushes dog documents into the vector store for retrieval-augmented responses.
+  * Uses `ChatClient` beans configured with `AssistantConstants.ASSISTANT_SYSTEM_PROMPT` plus two advisors: `QuestionAnswerAdvisor` for pgvector-backed retrieval and `PromptChatMemoryAdvisor` for JDBC chat memory (@assistant/src/main/java/com/example/assistant/config/AssistantConfiguration.java#29-83).
+  * Registers MCP tool callbacks so the assistant can invoke remote tools (e.g., scheduling) while responding.
+  * Generates short, title-case chat titles by calling a dedicated `summarizeClient` when a conversation is first saved (@assistant/src/main/java/com/example/assistant/service/ChatAssistantService.java#31-93).
+* **Data flow**: Dog data lives in the application database. When the `embedding` profile is active, an `ApplicationRunner` pushes dog records into the vector store for retrieval-augmented answers.
 
-## Scheduler MCP service (`scheduler/`)
+## Scheduler MCP service (`mcp-server/`)
 
-* **Purpose**: Provide MCP tools that the assistant (or other agents) can invoke. Currently includes `DogAdoptionScheduler`.
+* **Purpose**: Provide MCP tools that the assistant (or other agents) can invoke over SSE. Currently includes `DogAdoptionScheduler` (@mcp-server/src/main/java/com/example/scheduler/mcp/DogAdoptionScheduler.java#12-35).
 * **Tools**:
-  * `schedule(dogId, dogName)` – returns an ISO timestamp three days in the future to represent an adoption pickup. The method is annotated with `@McpTool` and argument metadata via `@McpArg` so MCP clients can auto-generate tool schemas.
-* **Logging**: Each scheduling request logs the dog name, ID, and proposed pickup time.
+  * `schedule(dogId, dogName)` – returns an ISO timestamp three days in the future to represent an adoption pickup, using `@McpTool` and `@McpArg` annotations for schema publishing.
+* **Logging**: Each scheduling request logs the requested dog and the proposed pickup timestamp.
 
 ## How the pieces interact
 
-1. A user calls the assistant’s `/dogs` endpoint or asks a question via `/alice/ask?question=...`.
-2. The assistant’s `ChatClient` builds a prompt using the system instructions, vector-store grounding, and chat memory scoped by conversation ID (the `{user}` path variable).
-3. When the model decides it needs to schedule a pickup, it can call the MCP `schedule` tool (exposed by the scheduler service). The tool responds with a timestamp that the assistant incorporates into its reply.
+1. The UI (or an API caller) retrieves demo users via `/users`, selects one, and loads their chat summaries plus history via `/chats` + `/chats/{chatId}`.
+2. When the user sends a message, the UI calls `/ask?question=...` with `X-User-Id` and optional `chatId`. `ChatAssistantService` resolves or creates the chat, routes the question through `dogAssistantChatClient`, and persists the answer/title in the database.
+3. The `dogAssistantChatClient` prompt uses the system instructions, vector-store grounding, and chat-memory advisor scoped by `ChatMemory.CONVERSATION_ID`. If the model decides to schedule a pickup, it calls the MCP `schedule` tool hosted by `mcp-server`, receives a timestamp, and weaves it into the final reply.
 
 ## Next steps
 
 * Seed realistic dog data in `assistant` and re-run with the `embedding` profile to refresh the vector store.
-* Extend `scheduler` with more MCP tools (e.g., cancel/reschedule appointments, notify adopters).
-* Document environment variables (OpenAI API key, database URLs) in `.env` for easier onboarding.
+* Extend `mcp-server` with more MCP tools (e.g., cancel/reschedule appointments, notify adopters) and wire them into the assistant tool callbacks.
+* Polish the UI with authentication or live-streamed responses, and document environment variables (OpenAI API key, database URLs, Ollama models) for easier onboarding.
