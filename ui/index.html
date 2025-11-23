@@ -10,8 +10,21 @@
 <div class="app-shell">
     <aside class="sidebar">
         <header class="sidebar__brand">
-            <p class="sidebar__eyebrow">Pooch Palace</p>
-            <h1>AI Adoption Concierge</h1>
+            <div class="sidebar__brand-text">
+                <p class="sidebar__eyebrow">Pooch Palace</p>
+                <h1>AI Adoption Concierge</h1>
+            </div>
+            <button
+                    id="themeToggle"
+                    class="theme-toggle"
+                    type="button"
+                    aria-pressed="false"
+                    aria-label="Switch to dark theme"
+            >
+                <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀️</span>
+                <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">🌙</span>
+                <span id="themeToggleText" class="theme-toggle__text">Day</span>
+            </button>
         </header>
 
         <section class="sidebar__users">
@@ -46,7 +59,6 @@
         <section class="chat-panel" aria-live="polite">
             <header class="chat-panel__header">
                 <div>
-                    <p class="chat-panel__eyebrow">Conversation</p>
                     <h2 id="chatPanelTitle">Select a user to get started</h2>
                 </div>
             </header>

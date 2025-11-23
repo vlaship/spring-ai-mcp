@@ -13,6 +13,15 @@ const chatHistory = document.getElementById("chatHistory");
 const messageForm = document.getElementById("messageForm");
 const messageInput = document.getElementById("messageInput");
 const sendButton = document.getElementById("sendMessage");
+const themeToggleButton = document.getElementById("themeToggle");
+const themeToggleText = document.getElementById("themeToggleText");
+
+const Theme = {
+    DAY: "day",
+    DARK: "dark",
+};
+
+const THEME_STORAGE_KEY = "pooch-palace-theme";
 
 const state = {
     users: [],
@@ -28,16 +37,22 @@ const state = {
 
 const DRAFT_CHAT_KEY = "__draft";
 const MAX_HISTORY_MESSAGES = 40;
+let currentTheme = Theme.DAY;
 
 init();
 
 function init() {
+    initializeTheme();
     attachEventListeners();
     resetChatPanel();
     loadUsers();
 }
 
 function attachEventListeners() {
+    if (themeToggleButton) {
+        themeToggleButton.addEventListener("click", handleThemeToggleClick);
+    }
+
     userSelect.addEventListener("change", (event) => {
         const userId = event.target.value;
         state.selectedUserId = userId || null;
@@ -635,6 +650,64 @@ function clearAllPendingAssistantAnimations() {
         window.clearInterval(state.pendingAssistantIntervals[messageId]);
         delete state.pendingAssistantIntervals[messageId];
     });
+}
+
+function handleThemeToggleClick() {
+    toggleTheme();
+}
+
+function initializeTheme() {
+    const storedTheme = readStoredThemePreference();
+    if (storedTheme === Theme.DARK) {
+        setTheme(Theme.DARK, { skipPersist: true });
+    } else {
+        setTheme(Theme.DAY, { skipPersist: true });
+    }
+}
+
+function toggleTheme() {
+    const nextTheme = currentTheme === Theme.DARK ? Theme.DAY : Theme.DARK;
+    setTheme(nextTheme);
+}
+
+function setTheme(theme, { skipPersist = false } = {}) {
+    const nextTheme = theme === Theme.DARK ? Theme.DARK : Theme.DAY;
+    currentTheme = nextTheme;
+    const isDark = nextTheme === Theme.DARK;
+
+    document.body.classList.toggle("theme-dark", isDark);
+
+    if (themeToggleButton) {
+        themeToggleButton.setAttribute("aria-pressed", String(isDark));
+        themeToggleButton.setAttribute(
+            "aria-label",
+            isDark ? "Switch to day theme" : "Switch to dark theme"
+        );
+    }
+
+    if (themeToggleText) {
+        themeToggleText.textContent = isDark ? "Dark" : "Day";
+    }
+
+    if (!skipPersist) {
+        persistThemePreference(nextTheme);
+    }
+}
+
+function readStoredThemePreference() {
+    try {
+        return localStorage.getItem(THEME_STORAGE_KEY);
+    } catch (error) {
+        return null;
+    }
+}
+
+function persistThemePreference(theme) {
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (error) {
+        // ignore write errors (e.g., storage disabled)
+    }
 }
 
 function inferAssistantBaseUrl() {
