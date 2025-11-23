@@ -1,7 +1,5 @@
 package com.example.assistant.model;
 
-import static com.example.assistant.AssistantConstants.MAX_LAST_MESSAGE_CHARACTERS;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -15,33 +13,17 @@ public record Chat(
         @Id UUID chatId,
         @Column("user_id") UUID userId,
         String title,
-        @Column("last_message") String lastMessage,
         @Column("created_at") Instant createdAt
 ) {
     public Chat withId(UUID generate) {
-        return new Chat(generate, this.userId, this.title, this.lastMessage, this.createdAt);
-    }
-
-    public Chat withLastMessage(String newMessage) {
-        return new Chat(this.chatId, this.userId, this.title, trim(newMessage), this.createdAt);
+        return new Chat(generate, this.userId, this.title, this.createdAt);
     }
 
     public Chat withTitle(String newTitle) {
-        return new Chat(this.chatId, this.userId, newTitle, this.lastMessage, this.createdAt);
+        return new Chat(this.chatId, this.userId, newTitle, this.createdAt);
     }
 
-    public static Chat newChat(
-            UUID userId,
-            String lastMessage
-    ) {
-        return new Chat(null, userId, null, trim(lastMessage), Instant.now());
-    }
-
-    private static String trim(String text) {
-        if (text == null || text.length() <= MAX_LAST_MESSAGE_CHARACTERS) {
-            return text;
-        }
-
-        return text.substring(0, Math.max(0, MAX_LAST_MESSAGE_CHARACTERS - 3)).trim() + "...";
+    public static Chat newChat(UUID userId) {
+        return new Chat(null, userId, null, Instant.now());
     }
 }

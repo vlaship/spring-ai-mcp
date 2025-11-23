@@ -202,16 +202,11 @@ function renderChats(chats) {
             title.className = "chat-card__title";
             title.textContent = chat.title || "Untitled chat";
 
-            const message = document.createElement("p");
-            message.className = "chat-card__message";
-            message.textContent = chat.lastMessage || "No messages yet";
-
             const timestamp = document.createElement("span");
             timestamp.className = "chat-card__timestamp";
             timestamp.textContent = formatTimestamp(chat.createdAt);
 
             card.appendChild(title);
-            card.appendChild(message);
             card.appendChild(timestamp);
 
             fragment.appendChild(card);

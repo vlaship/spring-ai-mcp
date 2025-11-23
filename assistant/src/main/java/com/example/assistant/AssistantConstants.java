@@ -2,7 +2,7 @@ package com.example.assistant;
 
 public interface AssistantConstants {
 
-    int MAX_LAST_MESSAGE_CHARACTERS = 60;
+    int MAX_TITLE_CHARACTERS = 60;
 
     String USER_HEADER = "X-User-Id";
 

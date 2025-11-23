@@ -33,7 +33,7 @@ public class ChatAssistantService {
         log.debug("Processing ask request for userId={} chatId={}", userId, chatId);
 
         var sanitizedQuestion = StringUtils.trimToEmpty(question);
-        var resolvedChat = resolveChat(chatId, userId, sanitizedQuestion);
+        var resolvedChat = resolveChat(chatId, userId);
 
         var answer = dogAssistantChatClient
                 .prompt()
@@ -45,7 +45,7 @@ public class ChatAssistantService {
             return new AnswerResponse(resolvedChat.chatId(), null);
         }
 
-        var chatToSave = resolvedChat.withLastMessage(answer);
+        var chatToSave = resolvedChat;
         if (resolvedChat.title() == null) {
             log.debug("Generating title for userId={} chatId={}", userId, resolvedChat.chatId());
             var generatedTitle = summarizeTitle(sanitizedQuestion, answer);
@@ -54,20 +54,22 @@ public class ChatAssistantService {
             }
         }
 
-        chatRepository.save(chatToSave);
+        if (!chatToSave.equals(resolvedChat)) {
+            chatRepository.save(chatToSave);
+        }
+
         return new AnswerResponse(resolvedChat.chatId(), answer);
     }
 
-    private Chat resolveChat(@Nullable UUID chatId, UUID userId, String firstMessage) {
+    private Chat resolveChat(@Nullable UUID chatId, UUID userId) {
         if (chatId == null) {
-            var chat = Chat.newChat(userId, firstMessage);
+            var chat = Chat.newChat(userId);
             log.debug("New chat created for userId={} chatId={}", userId, chat.chatId());
             return chatRepository.save(chat);
         }
 
         log.debug("Resolving existing userId={} chatId={}", userId, chatId);
-        var chat = chatDirectoryService.findChat(userId, chatId);
-        return chat.withLastMessage(firstMessage);
+        return chatDirectoryService.findChat(userId, chatId);
     }
 
     @Nullable
@@ -87,7 +89,10 @@ public class ChatAssistantService {
                 return null;
             }
 
-            return candidate.trim();
+            return StringUtils.abbreviate(
+                    candidate.trim(),
+                    AssistantConstants.MAX_TITLE_CHARACTERS
+            );
         } catch (RuntimeException ex) {
             log.warn("Failed to generate chat title via model. {}", ex.getMessage());
             return null;

@@ -18,6 +18,7 @@ databaseChangeLog:
                   name: name
                   header: name
                   type: STRING
+
   - changeSet:
       id: 1763680139351-load-dogs
       author: cascade
@@ -45,6 +46,8 @@ databaseChangeLog:
                   header: description
                   name: description
                   type: STRING
+
+# openai embeddings dimensions: 1536
 #  - changeSet:
 #       id: 1763680144454-load-vector-store
 #       author: cascade
@@ -52,7 +55,7 @@ databaseChangeLog:
 #         - loadData:
 #             file: data/vector_store.csv
 #             relativeToChangelogFile: true
-#             tableName: vector_store
+#             tableName: vector_store_large
 #             separator: ","
 #             encoding: UTF-8
 #             columns:
