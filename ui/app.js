@@ -500,27 +500,143 @@ async function sendMessage(question) {
     updateComposerState();
 
     try {
-        const params = new URLSearchParams({ question });
-        if (state.selectedChatId) {
-            params.append("chatId", state.selectedChatId);
-        }
-
-        const response = await fetchJson(`/ask?${params.toString()}`, {
-            headers: {
-                "X-User-Id": state.selectedUserId,
-            },
-        });
-
-        handleAskSuccess(response, historyKey);
+        await streamAssistantResponse(question, historyKey);
+        refreshActiveChatMetadata();
     } catch (error) {
         console.error(error);
-        clearAssistantPlaceholder(historyKey);
-        addMessageToHistory("system", `Failed to send message: ${error.message}`, historyKey);
-        renderChatHistory(getHistory(historyKey));
+        const targetHistoryKey = error?.historyKey ?? historyKey;
+        clearAssistantPlaceholder(targetHistoryKey);
+        addMessageToHistory("system", `Failed to send message: ${error.message}`, targetHistoryKey);
+        renderChatHistory(getHistory(targetHistoryKey));
     } finally {
         state.isSending = false;
         updateComposerState();
     }
+}
+
+async function streamAssistantResponse(question, initialHistoryKey) {
+    const params = new URLSearchParams({ question });
+    if (state.selectedChatId) {
+        params.append("chatId", state.selectedChatId);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/ask/stream?${params.toString()}`, {
+        headers: {
+            Accept: "application/x-ndjson",
+            "X-User-Id": state.selectedUserId,
+        },
+    });
+
+    if (!response.ok) {
+        const message = await tryReadError(response);
+        throw new Error(message);
+    }
+
+    if (!response.body) {
+        throw new Error("Streaming not supported in this browser.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let aggregatedAnswer = "";
+    let currentHistoryKey = initialHistoryKey;
+    let finalResult = null;
+
+    const processEvent = (event) => {
+        const { chatId, delta, done, answer, error } = event;
+
+        if (error) {
+            throw new Error(error);
+        }
+
+        if (chatId && chatId !== currentHistoryKey) {
+            currentHistoryKey = ensureChatSelection(chatId, currentHistoryKey);
+        }
+
+        if (typeof delta === "string" && delta.length) {
+            aggregatedAnswer += delta;
+            updateAssistantPlaceholderContent(currentHistoryKey, aggregatedAnswer);
+            renderChatHistory(getHistory(currentHistoryKey));
+        }
+
+        if (done) {
+            const finalAnswer = answer ?? aggregatedAnswer ?? "";
+            resolveAssistantPlaceholder(currentHistoryKey, finalAnswer);
+            renderChatHistory(getHistory(currentHistoryKey));
+            finalResult = {
+                chatId: chatId ?? state.selectedChatId ?? currentHistoryKey,
+                answer: finalAnswer,
+            };
+            return true;
+        }
+
+        return false;
+    };
+
+    try {
+        while (true) {
+            const { value, done } = await reader.read();
+
+            if (value) {
+                buffer += decoder.decode(value, { stream: true });
+                let newlineIndex;
+                while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+                    const line = buffer.slice(0, newlineIndex);
+                    buffer = buffer.slice(newlineIndex + 1);
+                    const trimmed = line.trim();
+                    if (!trimmed) {
+                        continue;
+                    }
+
+                    let event;
+                    try {
+                        event = JSON.parse(trimmed);
+                    } catch (parseError) {
+                        console.error("Failed to parse stream chunk", parseError, trimmed);
+                        continue;
+                    }
+
+                    if (processEvent(event)) {
+                        await reader.cancel().catch(() => {});
+                        return finalResult;
+                    }
+                }
+            }
+
+            if (done) {
+                const remaining = buffer.trim();
+                if (remaining) {
+                    try {
+                        const event = JSON.parse(remaining);
+                        if (processEvent(event)) {
+                            break;
+                        }
+                    } catch (parseError) {
+                        console.error("Failed to parse final stream chunk", parseError, remaining);
+                    }
+                }
+                break;
+            }
+        }
+    } catch (streamError) {
+        streamError.historyKey = currentHistoryKey;
+        throw streamError;
+    } finally {
+        try {
+            reader.releaseLock();
+        } catch (releaseError) {
+            // ignore release issues
+        }
+    }
+
+    if (!finalResult) {
+        const error = new Error("Stream ended before completion.");
+        error.historyKey = currentHistoryKey;
+        throw error;
+    }
+
+    return finalResult;
 }
 
 function handleAskSuccess(response, previousHistoryKey) {
@@ -529,24 +645,44 @@ function handleAskSuccess(response, previousHistoryKey) {
         return;
     }
 
-    if (!state.selectedChatId) {
-        // Move draft history under the newly created chat id
-        state.historyByChatId[chatId] = state.historyByChatId[previousHistoryKey] ?? [];
-        if (previousHistoryKey !== chatId) {
-            delete state.historyByChatId[previousHistoryKey];
-        }
-        if (state.pendingAssistantByChatId[previousHistoryKey]) {
-            state.pendingAssistantByChatId[chatId] = state.pendingAssistantByChatId[previousHistoryKey];
+    const targetKey = ensureChatSelection(chatId, previousHistoryKey);
+
+    if (!resolveAssistantPlaceholder(targetKey, answer)) {
+        addMessageToHistory("assistant", answer, targetKey);
+    }
+    renderChatHistory(getHistory(targetKey));
+    refreshActiveChatMetadata();
+}
+
+function ensureChatSelection(chatId, previousHistoryKey) {
+    if (!chatId) {
+        return previousHistoryKey;
+    }
+
+    if (previousHistoryKey !== chatId) {
+        const previousHistory = state.historyByChatId[previousHistoryKey] ?? [];
+        state.historyByChatId[chatId] = previousHistory;
+        delete state.historyByChatId[previousHistoryKey];
+
+        const pendingId = state.pendingAssistantByChatId[previousHistoryKey];
+        if (pendingId) {
+            state.pendingAssistantByChatId[chatId] = pendingId;
             delete state.pendingAssistantByChatId[previousHistoryKey];
         }
+    }
+
+    if (!state.selectedChatId) {
         state.selectedChatId = chatId;
         state.isComposingNewChat = false;
     }
 
-    if (!resolveAssistantPlaceholder(chatId, answer)) {
-        addMessageToHistory("assistant", answer, chatId);
+    return chatId;
+}
+
+function refreshActiveChatMetadata() {
+    if (!state.selectedUserId || !state.selectedChatId) {
+        return;
     }
-    renderChatHistory(getHistory(chatId));
 
     loadChats(state.selectedUserId).then(() => {
         const activeChat = state.chats.find((chat) => chat.chatId === state.selectedChatId);
@@ -579,6 +715,25 @@ function addAssistantPlaceholder(chatKey) {
     });
     state.pendingAssistantByChatId[chatKey] = entry.id;
     return entry;
+}
+
+function updateAssistantPlaceholderContent(chatKey, content) {
+    const pendingId = state.pendingAssistantByChatId[chatKey];
+    if (!pendingId) {
+        return;
+    }
+
+    const history = getHistory(chatKey);
+    const entry = history.find((message) => message.id === pendingId);
+    if (!entry) {
+        return;
+    }
+
+    entry.content = content ?? "";
+    if (entry.status === "pending") {
+        entry.status = "streaming";
+        stopPendingStatusAnimation(pendingId);
+    }
 }
 
 function resolveAssistantPlaceholder(chatKey, answer) {
