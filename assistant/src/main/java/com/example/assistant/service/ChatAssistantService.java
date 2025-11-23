@@ -53,7 +53,7 @@ public class ChatAssistantService {
     public Flux<AnswerStreamEvent> askStream(UUID userId, String question, @Nullable UUID chatId) {
         log.debug("Processing streaming ask request for userId={} chatId={}", userId, chatId);
 
-        String sanitizedQuestion = Objects.requireNonNull(StringUtils.trimToEmpty(question));
+        var sanitizedQuestion = StringUtils.trimToEmpty(question);
         var resolvedChat = resolveChat(chatId, userId);
         var builder = new StringBuilder();
 
