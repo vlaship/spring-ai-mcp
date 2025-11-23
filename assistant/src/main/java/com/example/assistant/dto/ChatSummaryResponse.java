@@ -8,7 +8,6 @@ import java.util.UUID;
 public record ChatSummaryResponse(
         UUID chatId,
         String title,
-        String lastMessage,
         Instant createdAt
 ) {
 
@@ -16,7 +15,6 @@ public record ChatSummaryResponse(
         return new ChatSummaryResponse(
                 chat.chatId(),
                 chat.title(),
-                chat.lastMessage(),
                 chat.createdAt()
         );
     }
