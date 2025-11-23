@@ -46,9 +46,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: last_message
-                  type: text
-              - column:
                   name: created_at
                   type: timestamptz
                   defaultValueComputed: CURRENT_TIMESTAMP

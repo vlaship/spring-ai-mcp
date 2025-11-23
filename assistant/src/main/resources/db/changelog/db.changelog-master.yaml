@@ -1,5 +1,5 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/db.changelog-schema.yaml
+      file: db/changelog/changelogs/20251122-1-init-schema.yaml
   - include:
-      file: db/changelog/db.changelog-data.yaml
+      file: db/changelog/changelogs/20251122-2-data-load.yaml
