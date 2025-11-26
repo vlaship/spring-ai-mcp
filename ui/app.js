@@ -17,8 +17,9 @@ const themeToggleButton = document.getElementById("themeToggle");
 const themeToggleText = document.getElementById("themeToggleText");
 
 const Theme = {
+    AUTO: "auto",
     DAY: "day",
-    DARK: "dark",
+    NIGHT: "night",
 };
 
 const THEME_STORAGE_KEY = "pooch-palace-theme";
@@ -813,39 +814,68 @@ function handleThemeToggleClick() {
 
 function initializeTheme() {
     const storedTheme = readStoredThemePreference();
-    if (storedTheme === Theme.DARK) {
-        setTheme(Theme.DARK, { skipPersist: true });
+    if (storedTheme && Object.values(Theme).includes(storedTheme)) {
+        setTheme(storedTheme, { skipPersist: true });
     } else {
-        setTheme(Theme.DAY, { skipPersist: true });
+        setTheme(Theme.AUTO, { skipPersist: true });
     }
+
+    // Listen for system theme changes when in auto mode
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", () => {
+        if (currentTheme === Theme.AUTO) {
+            applyTheme(Theme.AUTO);
+        }
+    });
 }
 
 function toggleTheme() {
-    const nextTheme = currentTheme === Theme.DARK ? Theme.DAY : Theme.DARK;
-    setTheme(nextTheme);
+    const themeOrder = [Theme.AUTO, Theme.DAY, Theme.NIGHT];
+    const currentIndex = themeOrder.indexOf(currentTheme);
+    const nextIndex = (currentIndex + 1) % themeOrder.length;
+    setTheme(themeOrder[nextIndex]);
 }
 
 function setTheme(theme, { skipPersist = false } = {}) {
-    const nextTheme = theme === Theme.DARK ? Theme.DARK : Theme.DAY;
-    currentTheme = nextTheme;
-    const isDark = nextTheme === Theme.DARK;
+    const validTheme = Object.values(Theme).includes(theme) ? theme : Theme.AUTO;
+    currentTheme = validTheme;
+    applyTheme(validTheme);
+
+    if (!skipPersist) {
+        persistThemePreference(validTheme);
+    }
+}
+
+function applyTheme(theme) {
+    let isDark = false;
+    let label = "Auto";
+
+    if (theme === Theme.AUTO) {
+        isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        label = "Auto";
+    } else if (theme === Theme.NIGHT) {
+        isDark = true;
+        label = "Night";
+    } else {
+        isDark = false;
+        label = "Day";
+    }
 
     document.body.classList.toggle("theme-dark", isDark);
 
     if (themeToggleButton) {
+        themeToggleButton.setAttribute("data-theme", theme);
         themeToggleButton.setAttribute("aria-pressed", String(isDark));
+        const nextTheme = theme === Theme.AUTO ? Theme.DAY : (theme === Theme.DAY ? Theme.NIGHT : Theme.AUTO);
+        const nextLabel = nextTheme === Theme.AUTO ? "auto" : (nextTheme === Theme.DAY ? "day" : "night");
         themeToggleButton.setAttribute(
             "aria-label",
-            isDark ? "Switch to day theme" : "Switch to dark theme"
+            `Switch to ${nextLabel} theme`
         );
     }
 
     if (themeToggleText) {
-        themeToggleText.textContent = isDark ? "Dark" : "Day";
-    }
-
-    if (!skipPersist) {
-        persistThemePreference(nextTheme);
+        themeToggleText.textContent = label;
     }
 }
 
