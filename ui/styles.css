@@ -154,26 +154,38 @@ body.theme-dark {
     padding: 6px 12px;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    flex-shrink: 0;
 }
 
 .theme-toggle__icon {
     font-size: 1rem;
     line-height: 1;
     transition: transform 0.3s ease, opacity 0.3s ease;
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    margin-top: -0.5rem;
 }
 
 .theme-toggle__icon--sun {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .theme-toggle__icon--moon {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(6px) scale(0.8);
+}
+
+.theme-toggle__icon--auto {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
 }
 
 .theme-toggle__text {
     font-size: 0.85rem;
+    margin-left: 22px;
 }
 
 body.theme-dark .theme-toggle {
@@ -184,12 +196,33 @@ body.theme-dark .theme-toggle {
 
 body.theme-dark .theme-toggle__icon--sun {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-6px) scale(0.8);
 }
 
 body.theme-dark .theme-toggle__icon--moon {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+}
+
+body.theme-dark .theme-toggle__icon--auto {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.8);
+}
+
+/* Auto mode icon visibility */
+.theme-toggle[data-theme="auto"] .theme-toggle__icon--auto {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.theme-toggle[data-theme="auto"] .theme-toggle__icon--sun {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.8);
+}
+
+.theme-toggle[data-theme="auto"] .theme-toggle__icon--moon {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
 }
 
 .sidebar__users label {
