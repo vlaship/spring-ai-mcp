@@ -39,8 +39,8 @@
     --user-bubble-text: #5c3110;
     --system-bubble-bg: #fef3c7;
     --system-bubble-text: #5c3b1b;
-    --chat-bubble-role: rgba(47, 47, 47, 0.7);
-    --chat-bubble-timestamp: rgba(47, 47, 47, 0.65);
+    --chat-bubble-role: rgba(23, 23, 23, 0.85);
+    --chat-bubble-timestamp: rgba(23, 23, 23, 0.75);
     --message-form-bg: #fff4e6;
     --message-form-text: #d9a36a;
     --button-primary: #6b8e23;
@@ -84,14 +84,14 @@ body.theme-dark {
     --chat-history-bg: #0b1728;
     --chat-bubble-bg: #1e293b;
     --chat-bubble-text: #e2e8f0;
-    --assistant-bubble-bg: #0f766e;
-    --assistant-bubble-text: #ecfccb;
-    --user-bubble-bg: #f97316;
-    --user-bubble-text: #fff7ed;
-    --system-bubble-bg: #312e81;
-    --system-bubble-text: #e0e7ff;
-    --chat-bubble-role: rgba(148, 163, 184, 0.85);
-    --chat-bubble-timestamp: rgba(148, 163, 184, 0.75);
+    --assistant-bubble-bg: #1a9d8d;
+    --assistant-bubble-text: #05322c;
+    --user-bubble-bg: #ffd9be;
+    --user-bubble-text: #2b1304;
+    --system-bubble-bg: #cab8ff;
+    --system-bubble-text: #1e1346;
+    --chat-bubble-role: rgba(241, 245, 249, 0.95);
+    --chat-bubble-timestamp: rgba(226, 232, 240, 0.9);
     --message-form-bg: #1f2937;
     --message-form-text: #e2e8f0;
     --button-primary: #16a34a;
@@ -476,6 +476,12 @@ body.theme-dark .theme-toggle__icon--moon {
     font-size: 0.75rem;
     color: var(--chat-bubble-timestamp);
     margin-top: 8px;
+}
+
+.chat-bubble--user .chat-bubble__role,
+.chat-bubble--user .chat-bubble__timestamp {
+    color: rgba(43, 19, 4, 0.85);
+    text-shadow: none;
 }
 
 .message-form {
