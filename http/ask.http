@@ -26,3 +26,87 @@ Accept: application/json
 GET {{ASSISTANT_URL}}/ask?question={{QUESTION1}}
 X-User-Id: {{USER_ID}}
 Accept: application/json
+
+### Embed the dog catalog (assistant/src/main/resources/db/changelog/data/dogs.csv)
+POST {{ASSISTANT_URL}}/embeddings
+Content-Type: application/json
+
+[
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000001",
+      "name": "Bella",
+      "description": "Gentle golden retriever who loves long walks and squeaky toys."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000002",
+      "name": "Max",
+      "description": "Playful beagle mix with a nose for adventure and snacks."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000003",
+      "name": "Luna",
+      "description": "Calm husky who enjoys winter weather and belly rubs."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000004",
+      "name": "Charlie",
+      "description": "Smart border collie that excels at agility courses."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000005",
+      "name": "Milo",
+      "description": "Curious lab mix with a love for hiking and swimming."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000006",
+      "name": "Daisy",
+      "description": "Sweet terrier that thrives on cuddles and treats."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000007",
+      "name": "Cooper",
+      "description": "Energetic Aussie shepherd who loves learning tricks."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000008",
+      "name": "Sadie",
+      "description": "Affectionate pug that prefers quiet naps on the couch."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-000000000009",
+      "name": "Rocky",
+      "description": "Resilient mixed breed who enjoys fetch and car rides."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-00000000000a",
+      "name": "Zoe",
+      "description": "Friendly doodle that gets along with everyone at the park."
+    }
+  },
+  {
+    "content": {
+      "id": "00000000-0000-0000-0001-00000000000b",
+      "name": "Buddy",
+      "description": "Loyal German shepherd that adores obedience training."
+    }
+  }
+]

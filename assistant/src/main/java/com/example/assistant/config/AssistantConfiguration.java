@@ -19,10 +19,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import javax.sql.DataSource;
 import java.util.List;
 
+@EnableAsync
 @Configuration
 public class AssistantConfiguration {
 
