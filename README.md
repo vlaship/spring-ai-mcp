@@ -41,7 +41,7 @@ Demo workspace for building AI-assisted workflows for financial advisors creatin
 * **Vector store**: pgvector via Spring AI, can be populated with financial documentation, compliance guidelines, or investment strategy documents.
 * **Chat memory**: JDBC-backed `PromptChatMemoryAdvisor` scoped by `ChatMemory.CONVERSATION_ID`.
 * **MCP integration**: registered through `SyncMcpToolCallbackProvider`, enabling model-initiated tool calls to retrieve client data and create proposals.
-* **Profiles**: `application.yml` holds shared settings, while `application-openai.yml` and `application-ollama.yml` configure different model providers. Use `--spring.profiles.active=openai` for OpenAI or `--spring.profiles.active=ollama` for local models.
+* **Profiles**: `application.yml` holds shared settings, while `application-openai.yml`, `application-azure.yml`, and `application-ollama.yml` configure different model providers. Use `--spring.profiles.active=openai` for OpenAI, `--spring.profiles.active=azure` for Azure OpenAI, or `--spring.profiles.active=ollama` for local models.
 
 ### Persistence & infra
 
@@ -146,7 +146,7 @@ The MCP server will start on `http://localhost:8082/proposal-mcp-service`
 
 ```bash
 cd assistant
-mvn spring-boot:run -Dspring-boot.run.profiles=ollama   # or openai
+mvn spring-boot:run -Dspring-boot.run.profiles=ollama   # or openai, or azure
 ```
 
 The assistant will:
@@ -154,6 +154,32 @@ The assistant will:
 - Apply Liquibase schema + seed data
 - Connect to the MCP server at the configured `MCP_SERVER_URL`
 - Start on `http://localhost:8083/proposal-assistant-service`
+
+#### Using Azure OpenAI
+
+To use Azure OpenAI, uncomment the Azure OpenAI dependency in `assistant/pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-azure-openai</artifactId>
+</dependency>
+```
+
+Then configure your `.env` file with Azure OpenAI credentials:
+
+```bash
+AZURE_OPENAI_API_KEY=your-azure-openai-api-key
+AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
+AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=gpt-4o
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME=text-embedding-3-small
+```
+
+Run with the `azure` profile:
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=azure
+```
 
 ### 5. Launch the UI (optional)
 
@@ -267,7 +293,7 @@ The project includes HTTP test files in the `http/` directory for testing both R
 
 1. Use the `http/` samples to sanity-check endpoints without the UI.
 2. To populate the vector store with financial documentation, add documents and run with the `embedding` profile.
-3. Update `assistant/src/main/resources/application-openai.yml` and `application-ollama.yml` to target other models or embeddings.
+3. Update `assistant/src/main/resources/application-openai.yml`, `application-azure.yml`, and `application-ollama.yml` to target other models or embeddings.
 4. The UI stores draft conversations client-side (key `__draft`) before a chatId is assigned; keep this in mind when extending the UX.
 5. Enable debug logging with `logging.level.dev.vlaship=debug` to see detailed MCP tool invocations.
 6. Use Swagger UI at `http://localhost:8082/proposal-mcp-service/swagger-ui.html` for interactive API testing.

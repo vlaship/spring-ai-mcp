@@ -27,6 +27,7 @@ This repository hosts two cooperating Spring Boot applications (plus a lightweig
   * Uses `proposalAssistantChatClient` bean configured with finance-focused system prompts plus two advisors: `QuestionAnswerAdvisor` for pgvector-backed retrieval and `PromptChatMemoryAdvisor` for JDBC chat memory.
   * Registers MCP tool callbacks so the assistant can invoke remote tools (e.g., getClientsByFaId, createProposal) while responding.
   * Generates short, title-case chat titles by calling a dedicated `summarizeClient` when a conversation is first saved.
+  * Supports multiple LLM providers via Spring profiles: `openai`, `azure` (Azure OpenAI), and `ollama` (local models).
 * **Data flow**: Client and proposal data is accessed via MCP tools from the mcp-server. The vector store can optionally be populated with financial documentation for retrieval-augmented answers.
 * **Database prerequisites**: Before running the assistant, ensure the target Postgres database has the application schema and pgvector extension created:
 
