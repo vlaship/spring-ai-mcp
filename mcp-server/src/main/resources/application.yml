@@ -7,7 +7,7 @@ spring:
 #        sse-endpoint: /${spring.application.name}/sse
 
 server:
-  port: 8082
+  port: 18082
   shutdown: immediate
 
 logging:

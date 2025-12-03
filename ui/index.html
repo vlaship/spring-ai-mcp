@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pooch Palace Assistant</title>
+    <title>Finance Proposal Assistant</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,8 +11,8 @@
     <aside class="sidebar">
         <header class="sidebar__brand">
             <div class="sidebar__brand-text">
-                <p class="sidebar__eyebrow">Pooch Palace</p>
-                <h1>AI Adoption Concierge</h1>
+                <p class="sidebar__eyebrow">Finance Advisor</p>
+                <h1>AI Proposal Assistant</h1>
             </div>
             <button
                     id="themeToggle"
@@ -36,7 +36,7 @@
                 </select>
                 <span class="select-caret">▾</span>
             </div>
-            <p class="sidebar__hint">Users come from the assistant service.</p>
+            <p class="sidebar__hint">Select a financial advisor to begin.</p>
         </section>
 
         <button id="newChat" class="button button--primary" disabled>
@@ -50,7 +50,7 @@
             </div>
             <div id="chatList" class="chat-list" aria-live="polite">
                 <div class="empty-state">
-                    Choose a user to view their chats.
+    Choose an advisor to view their conversations.
                 </div>
             </div>
         </section>
@@ -60,13 +60,13 @@
         <section class="chat-panel" aria-live="polite">
             <header class="chat-panel__header">
                 <div>
-                    <h2 id="chatPanelTitle">Select a user to get started</h2>
+                    <h2 id="chatPanelTitle">Select an advisor to get started</h2>
                 </div>
             </header>
 
             <div id="chatHistory" class="chat-history">
                 <div class="empty-state empty-state--light">
-                    Choose a user, then start a new chat or open an existing one.
+                    Choose an advisor, then start a new conversation or open an existing one.
                 </div>
             </div>
 

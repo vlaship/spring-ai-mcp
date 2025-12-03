@@ -57,31 +57,6 @@ databaseChangeLog:
                   name: user_id
 
   - changeSet:
-      id: 1763680116176-create-dogs
-      author: cascade
-      changes:
-        - createTable:
-            tableName: dogs
-            columns:
-              - column:
-                  name: dog_id
-                  type: uuid
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: name
-                  type: text
-                  constraints:
-                    nullable: false
-              - column:
-                  name: owner
-                  type: text
-              - column:
-                  name: description
-                  type: text
-
-  - changeSet:
       id: 1763680122197-create-chat-memory
       author: cascade
       changes:
@@ -175,4 +150,3 @@ databaseChangeLog:
               ON vector_store_large
               USING ivfflat (embedding vector_cosine_ops)
               WITH (lists = 200);
-
