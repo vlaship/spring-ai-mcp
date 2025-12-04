@@ -1,4 +1,4 @@
-const DEFAULT_ASSISTANT_BASE_URL = "http://localhost:8083/proposal-assistant-service";
+const DEFAULT_ASSISTANT_BASE_URL = "http://localhost:18083/proposal-assistant-service";
 
 const API_BASE_URL = normalizeBaseUrl(
     window.UI_CONFIG?.assistantBaseUrl ?? inferAssistantBaseUrl()
@@ -22,7 +22,7 @@ const Theme = {
     NIGHT: "night",
 };
 
-const THEME_STORAGE_KEY = "pooch-palace-theme";
+const THEME_STORAGE_KEY = "finance-proposal-theme";
 
 const state = {
     users: [],
@@ -189,7 +189,7 @@ async function loadChats(userId) {
 function resetChatsView() {
     state.chats = [];
     chatCount.textContent = "0";
-    renderChatPlaceholder("Choose a user to view their chats.");
+    renderChatPlaceholder("Choose an advisor to view their conversations.");
 }
 
 function renderChats(chats) {
@@ -197,7 +197,7 @@ function renderChats(chats) {
     chatCount.textContent = chats.length;
 
     if (!chats.length) {
-        renderChatPlaceholder("No chats yet. Start one to begin the conversation!");
+        renderChatPlaceholder("No conversations yet. Start one to create a proposal!");
         return;
     }
 
@@ -256,13 +256,13 @@ function formatTimestamp(value) {
 }
 
 function resetChatPanel() {
-    chatPanelTitle.textContent = "Select a user to get started";
+    chatPanelTitle.textContent = "Select an advisor to get started";
     state.historyByChatId[DRAFT_CHAT_KEY] = [];
     clearAllPendingAssistantAnimations();
     state.pendingAssistantByChatId = {};
     state.pendingAssistantIntervals = {};
     renderChatHistory([], {
-        placeholder: "Choose a user, then start a new chat or open an existing one.",
+        placeholder: "Choose an advisor, then start a new conversation or open an existing one.",
     });
     messageInput.value = "";
     state.isSending = false;
@@ -271,9 +271,9 @@ function resetChatPanel() {
 }
 
 function prepareChatPanelForUser() {
-    chatPanelTitle.textContent = "Pick a chat or start a new one";
+    chatPanelTitle.textContent = "Pick a conversation or start a new one";
     renderChatHistory(getHistory(DRAFT_CHAT_KEY), {
-        placeholder: "Type a message to start a new chat or pick one on the left.",
+        placeholder: "Type a message to start creating a proposal or pick a conversation on the left.",
     });
     updateComposerState();
 }
@@ -290,7 +290,7 @@ function beginNewChatSession() {
     chatPanelTitle.textContent = "New conversation";
     messageInput.value = "";
     renderChatHistory(state.historyByChatId[DRAFT_CHAT_KEY], {
-        placeholder: "Say hello to begin the conversation.",
+        placeholder: "Ask about clients or start creating a proposal.",
     });
     updateComposerState();
     messageInput.focus();
@@ -320,7 +320,7 @@ async function selectExistingChat(chat) {
             status: "complete",
         }));
         renderChatHistory(getHistory(chat.chatId), {
-            placeholder: "No messages yet. Start the conversation!",
+            placeholder: "No messages yet. Start creating a proposal!",
         });
     } catch (error) {
         console.error(error);
@@ -377,7 +377,7 @@ function renderChatHistory(messages, options = {}) {
     if (!messages.length) {
         const placeholder = document.createElement("div");
         placeholder.className = "empty-state empty-state--light";
-        placeholder.textContent = options.placeholder || "No messages yet. Start the conversation!";
+        placeholder.textContent = options.placeholder || "No messages yet. Start creating a proposal!";
         chatHistory.appendChild(placeholder);
         return;
     }
@@ -553,6 +553,7 @@ async function streamAssistantResponse(question, initialHistoryKey) {
 
         if (chatId && chatId !== currentHistoryKey) {
             currentHistoryKey = ensureChatSelection(chatId, currentHistoryKey);
+            updateComposerState();
         }
 
         if (typeof delta === "string" && delta.length) {
