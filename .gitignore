@@ -31,6 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+.kiro/
 
 ### Node.js ###
 node_modules/
