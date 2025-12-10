@@ -16,7 +16,6 @@ interface ServerConfig {
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || 'localhost';
 
-// MIME types for common file extensions
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
   '.js': 'application/javascript',
@@ -63,7 +62,6 @@ function loadEnvFile(): EnvVars {
 }
 
 function createServerConfig(envVars: EnvVars): ServerConfig {
-  // Prioritize process environment variables over .env file
   const assistantUrl = process.env.ASSISTANT_URL || envVars.ASSISTANT_URL || 'http://localhost:8081/proposal-assistant-service';
   
   return {
@@ -74,11 +72,9 @@ function createServerConfig(envVars: EnvVars): ServerConfig {
 function injectConfigIntoHtml(htmlContent: string, config: ServerConfig): string {
   const configScript = `<script>window.UI_CONFIG = ${JSON.stringify(config)};</script>`;
   
-  // Insert config script before the closing </head> tag
   if (htmlContent.includes('</head>')) {
     return htmlContent.replace('</head>', `  ${configScript}\n</head>`);
   } else {
-    // Fallback: insert after <head> tag
     return htmlContent.replace('<head>', `<head>\n  ${configScript}`);
   }
 }
@@ -116,7 +112,6 @@ function serveFile(res: http.ServerResponse, filePath: string, config: ServerCon
 }
 
 function handleRequest(req: http.IncomingMessage, res: http.ServerResponse, config: ServerConfig): void {
-  // Enable CORS for development
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id');
@@ -136,21 +131,17 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse, conf
   const parsedUrl = url.parse(req.url);
   let pathname = parsedUrl.pathname || '';
 
-  // Remove leading slash
   if (pathname.startsWith('/')) {
     pathname = pathname.substring(1);
   }
 
-  // Default to index.html for root path
   if (pathname === '' || pathname === '/') {
     pathname = 'index.html';
   }
 
-  // Construct file path
   const rootDir = path.join(__dirname, '..');
   const filePath = path.join(rootDir, pathname);
 
-  // Security check - prevent directory traversal
   const resolvedPath = path.resolve(filePath);
   const rootPath = path.resolve(rootDir);
   
@@ -160,10 +151,8 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse, conf
     return;
   }
 
-  // Check if file exists
   fs.stat(resolvedPath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // Try serving from dist directory for built assets
       const distPath = path.join(rootDir, 'dist', pathname);
       fs.stat(distPath, (distErr, distStats) => {
         if (distErr || !distStats.isFile()) {
@@ -209,7 +198,6 @@ function startServer(): void {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-// Start the server if this file is run directly
 if (require.main === module) {
   startServer();
 }

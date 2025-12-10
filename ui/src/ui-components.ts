@@ -177,7 +177,6 @@ export class UIComponents {
       if (!messageBody) {
         return;
       }
-      // Only animate if the content is still "Thinking" (not replaced by actual content)
       if (messageBody.textContent?.startsWith('Thinking')) {
         const dots = '.'.repeat((frame % PENDING_DOTS_MAX) + 1);
         messageBody.textContent = `Thinking${dots}`;

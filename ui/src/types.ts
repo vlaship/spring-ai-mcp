@@ -1,4 +1,3 @@
-// Core domain types
 export interface User {
   readonly userId: string;
   readonly name: string;
@@ -21,7 +20,6 @@ export interface Message {
 export type MessageRole = 'assistant' | 'user' | 'system' | 'tool';
 export type MessageStatus = 'complete' | 'pending' | 'streaming';
 
-// API types
 export interface ChatHistoryResponse {
   readonly role: string;
   readonly content: string;
@@ -41,7 +39,6 @@ export interface AskResponse {
   readonly answer: string;
 }
 
-// UI State types
 export interface AppState {
   readonly users: readonly User[];
   readonly chats: readonly Chat[];
@@ -54,19 +51,16 @@ export interface AppState {
   readonly pendingAssistantIntervals: Record<string, number>;
 }
 
-// Theme types
 export enum Theme {
   AUTO = 'auto',
   DAY = 'day',
   NIGHT = 'night'
 }
 
-// Configuration types
 export interface UIConfig {
   readonly assistantBaseUrl?: string;
 }
 
-// DOM element types
 export interface DOMElements {
   readonly userSelect: HTMLSelectElement;
   readonly chatList: HTMLElement;
@@ -81,7 +75,6 @@ export interface DOMElements {
   readonly themeToggleText: HTMLElement | null;
 }
 
-// Utility types
 export interface RenderOptions {
   readonly placeholder?: string;
 }

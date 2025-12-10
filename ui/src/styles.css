@@ -209,7 +209,6 @@ body.theme-dark .theme-toggle__icon--auto {
     transform: translateY(-6px) scale(0.8);
 }
 
-/* Auto mode icon visibility */
 .theme-toggle[data-theme="auto"] .theme-toggle__icon--auto {
     opacity: 1;
     transform: translateY(0) scale(1);

@@ -1,6 +1,5 @@
 services:
 
-  ### database
   postgres:
     image: pgvector/pgvector:pg18
     environment:
@@ -17,7 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  ### local llm + embeddings
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -32,7 +30,6 @@ services:
     #   timeout: 10s
     #   retries: 3
 
-  ### mcp server
   mcp-server:
     build:
       context: ./mcp-server
@@ -51,7 +48,6 @@ services:
     #   timeout: 10s
     #   retries: 3
 
-  ### assistant service
   assistant:
     build:
       context: ./assistant
@@ -83,7 +79,6 @@ services:
     #   timeout: 10s
     #   retries: 3
 
-  ### web ui
   web-ui:
     build:
       context: ./ui

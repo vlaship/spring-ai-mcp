@@ -56,10 +56,8 @@ export class ChatService {
 
     const historyKey = stateManager.getActiveHistoryKey();
     
-    // Add user message
     stateManager.addMessageToHistory('user', question, historyKey);
     
-    // Add assistant placeholder
     stateManager.addAssistantPlaceholder(historyKey);
     
     stateManager.setIsSending(true);
@@ -68,7 +66,6 @@ export class ChatService {
     let currentHistoryKey = historyKey;
 
     try {
-      // Small delay to allow the "Thinking" animation to be visible
       await new Promise(resolve => setTimeout(resolve, 300));
       
       const stream = streamAssistantResponse({
@@ -128,10 +125,8 @@ export class ChatService {
     stateManager.setSelectedChatId(null);
     stateManager.setIsComposingNewChat(true);
     
-    // Clear any existing draft history
     stateManager.setChatHistory(DRAFT_CHAT_KEY, []);
     
-    // Clear any pending assistant placeholder for draft
     const pendingId = state.pendingAssistantByChatId[DRAFT_CHAT_KEY];
     if (pendingId) {
       stateManager.stopPendingAnimation(pendingId);
@@ -149,7 +144,6 @@ export class ChatService {
     stateManager.setSelectedChatId(chatId);
     stateManager.setIsComposingNewChat(false);
 
-    // Load chat history if not already cached
     const cachedHistory = stateManager.getHistory(chatId);
     if (cachedHistory.length === 0) {
       await this.loadChatHistory(chatId, state.selectedUserId);

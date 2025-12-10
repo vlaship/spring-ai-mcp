@@ -22,7 +22,6 @@ class ThemeManager {
       this.setTheme(Theme.AUTO, { skipPersist: true });
     }
 
-    // Listen for system theme changes when in auto mode
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     mediaQuery.addEventListener('change', () => {
       if (this.currentTheme === Theme.AUTO) {

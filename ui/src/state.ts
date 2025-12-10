@@ -112,7 +112,6 @@ class StateManager {
       return;
     }
 
-    // Create new message object to maintain immutability
     const updatedEntry: Message = {
       ...entry,
       content: content ?? '',
@@ -124,7 +123,6 @@ class StateManager {
       history[index] = updatedEntry;
     }
 
-    // Only stop animation when we have actual content, not just when status changes
     if (entry.status === 'pending' && content && content.length > 0) {
       this.stopPendingAnimation(pendingId);
     }
@@ -143,7 +141,6 @@ class StateManager {
       return false;
     }
 
-    // Create new message object to maintain immutability
     const updatedEntry: Message = {
       ...entry,
       content: answer,

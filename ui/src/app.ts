@@ -36,12 +36,10 @@ class App {
   }
 
   private attachEventListeners(): void {
-    // Theme toggle
     this.elements.themeToggleButton?.addEventListener('click', () => {
       themeManager.toggle();
     });
 
-    // User selection
     this.elements.userSelect.addEventListener('change', async (event) => {
       const target = event.target as HTMLSelectElement;
       const userId = target.value || null;
@@ -59,7 +57,6 @@ class App {
       }
     });
 
-    // New chat button
     this.elements.newChatButton.addEventListener('click', () => {
       const state = stateManager.getState();
       if (!state.selectedUserId) {
@@ -68,7 +65,6 @@ class App {
       this.beginNewChatSession();
     });
 
-    // Chat selection
     this.elements.chatList.addEventListener('click', async (event) => {
       const card = (event.target as HTMLElement).closest('.chat-card') as HTMLElement;
       if (!card?.dataset.chatId) {

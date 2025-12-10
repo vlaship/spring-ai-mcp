@@ -115,6 +115,5 @@ export function persistThemePreference(theme: string): void {
   try {
     localStorage.setItem('pooch-palace-theme', theme);
   } catch (error) {
-    // ignore write errors (e.g., storage disabled)
   }
 }
