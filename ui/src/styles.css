@@ -511,6 +511,18 @@ body.theme-dark .theme-toggle__icon--auto {
     margin-top: 8px;
 }
 
+.chat-bubble__inline-status {
+    display: inline-block;
+    margin-left: 8px;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.chat-bubble__inline-status-text {
+    font-size: 0.9em;
+    color: var(--chat-bubble-role);
+}
+
 .chat-bubble--user .chat-bubble__role,
 .chat-bubble--user .chat-bubble__timestamp {
     color: rgba(43, 19, 4, 0.85);

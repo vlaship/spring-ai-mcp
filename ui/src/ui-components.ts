@@ -146,18 +146,12 @@ export class UIComponents {
 
     const body = document.createElement('p');
     body.className = CSS_CLASSES.chatBubbleText;
-    body.textContent = message.content;
-
-    if (message.status === 'pending') {
-      const inlineStatus = document.createElement('span');
-      inlineStatus.className = CSS_CLASSES.chatBubbleInlineStatus;
-
-      const statusText = document.createElement('span');
-      statusText.className = CSS_CLASSES.chatBubbleInlineStatusText;
-      statusText.textContent = 'Thinking';
-
-      inlineStatus.appendChild(statusText);
-      body.appendChild(inlineStatus);
+    
+    if (message.status === 'pending' || (message.status === 'streaming' && !message.content)) {
+      body.textContent = 'Thinking';
+      body.style.minHeight = '20px';
+    } else {
+      body.textContent = message.content;
     }
 
     bubble.appendChild(roleLabel);
@@ -177,15 +171,18 @@ export class UIComponents {
   startPendingStatusAnimation(messageId: string): number {
     let frame = 0;
     const updateText = () => {
-      const statusText = this.chatHistory.querySelector(
-        `[data-message-id="${messageId}"] .${CSS_CLASSES.chatBubbleInlineStatusText}`
+      const messageBody = this.chatHistory.querySelector(
+        `[data-message-id="${messageId}"] .${CSS_CLASSES.chatBubbleText}`
       );
-      if (!statusText) {
+      if (!messageBody) {
         return;
       }
-      const dots = '.'.repeat((frame % PENDING_DOTS_MAX) + 1);
-      statusText.textContent = `Thinking${dots}`;
-      frame += 1;
+      // Only animate if the content is still "Thinking" (not replaced by actual content)
+      if (messageBody.textContent?.startsWith('Thinking')) {
+        const dots = '.'.repeat((frame % PENDING_DOTS_MAX) + 1);
+        messageBody.textContent = `Thinking${dots}`;
+        frame += 1;
+      }
     };
     
     updateText();

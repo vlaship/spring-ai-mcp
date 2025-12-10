@@ -64,61 +64,79 @@ Demo workspace for building AI-assisted workflows at **Pooch Palace**, a fiction
 * Includes a day/dark theme toggle that persists the selection in `localStorage` and updates all UI surfaces via CSS variables (@ui/app.js#16-711, @ui/styles.css#1-469, @ui/index.html#11-55).
 * To host locally, serve the `ui/` directory with any static server (e.g., `npx http-server ui`).
 
-## Local setup
+## Deployment Options
 
-### Prerequisites
+### 🐳 Docker Compose (Recommended)
+
+**Complete system with one command:**
+
+```bash
+# Configure environment
+cp example.env .env
+# Edit .env with your OpenAI API key and other settings
+
+# Start all services
+docker-compose up -d
+
+# Access the application
+open http://localhost:3000
+```
+
+This launches all services with proper dependencies and health checks:
+- **Web UI**: http://localhost:3000 (TypeScript interface)
+- **Assistant API**: http://localhost:8081 (Spring Boot service)
+- **MCP Server**: http://localhost:8082 (Scheduling tools)
+- **PostgreSQL**: localhost:15432 (Database + pgvector)
+- **Ollama**: http://localhost:11434 (Local LLM)
+
+See [DOCKER.md](./DOCKER.md) for detailed Docker deployment guide.
+
+### 🛠️ Local Development Setup
+
+**For development with hot reload:**
+
+#### Prerequisites
 
 * Java 25, Maven 3.9+
-* Docker Desktop (for Postgres + Ollama)
+* Node.js 20+ (for TypeScript UI)
+* Docker Desktop (for infrastructure)
 * Optional: OpenAI API key
-* Postgres role with privileges to run schema/extension setup:
 
-  ```sql
-  CREATE SCHEMA IF NOT EXISTS ${DB_SCHEMA};
+#### 1. Configure environment
 
-  CREATE EXTENSION IF NOT EXISTS vector;
-  ```
-
-### 1. Configure environment
-
-```
+```bash
 cp example.env .env
-# update DB credentials / OPENAI_API_KEY / MCP_SERVER_URL as needed
+# Update DB credentials, OPENAI_API_KEY, etc.
 ```
 
-### 2. Start infrastructure
+#### 2. Start infrastructure only
 
+```bash
+docker-compose up postgres ollama -d
 ```
-docker compose up -d
-```
 
-This launches:
+#### 3. Run services locally
 
-* Postgres + pgvector on `localhost:5432` with volume `./pgdata`
-* Ollama on `localhost:11434` storing models under `./ollama`
-
-### 3. Run the MCP server
-
-```
+```bash
+# Terminal 1: MCP Server
 cd mcp-server
 mvn spring-boot:run
-```
 
-### 4. Run the assistant service
-
-```
+# Terminal 2: Assistant Service  
 cd assistant
-mvn spring-boot:run -Dspring-boot.run.profiles=ollama   # or openai
+mvn spring-boot:run -Dspring-boot.run.profiles=ollama
+
+# Terminal 3: Web UI
+cd ui
+npm install
+npm start
 ```
 
-The assistant will connect to Postgres, Liquibase will apply schema + seed data, and (optionally) the `embedding` profile will push dog docs into pgvector.
+#### 4. Access the application
 
-### 5. Launch the UI (optional)
-
-```
-npx http-server ui --port 4173
-# or use any static file host; UI auto-points to http://localhost:8083/proposal-assistant-service
-```
+- **Web UI**: http://localhost:3000
+- **Assistant API**: http://localhost:8081
+- **MCP Server**: http://localhost:8082
 
 ## API quick start
 

@@ -68,6 +68,9 @@ export class ChatService {
     let currentHistoryKey = historyKey;
 
     try {
+      // Small delay to allow the "Thinking" animation to be visible
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const stream = streamAssistantResponse({
         question,
         userId: state.selectedUserId,
@@ -85,8 +88,10 @@ export class ChatService {
           currentHistoryKey = stateManager.ensureChatSelection(chatId, currentHistoryKey);
         }
 
-        if (typeof delta === 'string' && delta.length) {
-          aggregatedAnswer += delta;
+        if (typeof delta === 'string') {
+          if (delta.length > 0) {
+            aggregatedAnswer += delta;
+          }
           stateManager.updateAssistantPlaceholderContent(currentHistoryKey, aggregatedAnswer);
           onDelta?.(aggregatedAnswer);
         }

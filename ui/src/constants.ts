@@ -4,7 +4,7 @@ export const DRAFT_CHAT_KEY = '__draft';
 export const MAX_HISTORY_MESSAGES = 40;
 export const THEME_STORAGE_KEY = 'pooch-palace-theme';
 
-export const ANIMATION_INTERVAL_MS = 500;
+export const ANIMATION_INTERVAL_MS = 400;
 export const PENDING_DOTS_MAX = 3;
 
 export const DOM_SELECTORS = {

@@ -63,8 +63,11 @@ function loadEnvFile(): EnvVars {
 }
 
 function createServerConfig(envVars: EnvVars): ServerConfig {
+  // Prioritize process environment variables over .env file
+  const assistantUrl = process.env.ASSISTANT_URL || envVars.ASSISTANT_URL || 'http://localhost:8081/proposal-assistant-service';
+  
   return {
-    assistantBaseUrl: envVars.ASSISTANT_URL || 'http://localhost:8083/proposal-assistant-service'
+    assistantBaseUrl: assistantUrl
   };
 }
 

@@ -216,13 +216,11 @@ class App {
     const historyKey = stateManager.getActiveHistoryKey();
     this.elements.messageInput.value = '';
     
-    // Show user message and placeholder immediately
-    this.uiComponents.renderChatHistory(stateManager.getHistory(historyKey));
-    
     let animationId: number | null = null;
 
     try {
-      await chatService.sendMessage(
+      // Start the sendMessage process (this adds user message and placeholder to state immediately)
+      const sendPromise = chatService.sendMessage(
         question,
         // onDelta
         () => {
@@ -249,6 +247,9 @@ class App {
         }
       );
 
+      // Show user message and placeholder immediately (they're now in state)
+      this.uiComponents.renderChatHistory(stateManager.getHistory(historyKey));
+
       // Start animation for pending message
       const pendingState = stateManager.getState();
       const pendingId = pendingState.pendingAssistantByChatId[historyKey];
@@ -256,6 +257,9 @@ class App {
         animationId = this.uiComponents.startPendingStatusAnimation(pendingId);
         stateManager.startPendingAnimation(pendingId, animationId);
       }
+
+      // Wait for the message to complete
+      await sendPromise;
 
     } catch (error) {
       console.error('Failed to send message:', error);

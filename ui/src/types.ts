@@ -29,9 +29,9 @@ export interface ChatHistoryResponse {
 }
 
 export interface StreamEvent {
-  readonly chatId?: string;
+  readonly chatId: string;
   readonly delta?: string;
-  readonly done?: boolean;
+  readonly done: boolean;
   readonly answer?: string;
   readonly error?: string;
 }

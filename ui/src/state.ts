@@ -124,7 +124,8 @@ class StateManager {
       history[index] = updatedEntry;
     }
 
-    if (entry.status === 'pending') {
+    // Only stop animation when we have actual content, not just when status changes
+    if (entry.status === 'pending' && content && content.length > 0) {
       this.stopPendingAnimation(pendingId);
     }
   }
