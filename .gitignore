@@ -32,6 +32,21 @@ build/
 ### VS Code ###
 .vscode/
 
+### Node.js ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+### TypeScript ###
+*.tsbuildinfo
+ui/dist/
+ui/*.d.ts
+ui/*.js.map
+ui/*.cjs
+
 ### MISC ###
 pgdata/
 .env

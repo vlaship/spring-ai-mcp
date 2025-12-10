@@ -7,7 +7,7 @@ spring:
         sse:
           connections:
             scheduler:
-              url: ${MCP_SERVER_URL}
+              url: http://localhost:18082/proposal-mcp-service/sse
 
     vectorstore:
       pgvector:

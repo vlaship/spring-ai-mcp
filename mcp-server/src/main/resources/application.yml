@@ -1,14 +1,16 @@
 spring:
   application:
     name: proposal-mcp-service
-#  ai:
-#    mcp:
-#      server:
-#        sse-endpoint: /${spring.application.name}/sse
+  ai:
+    mcp:
+      server:
+        sse-endpoint: /${spring.application.name}/sse
 
 server:
-  port: 8082
+  port: 18082
   shutdown: immediate
+#  servlet:
+#    context-path: /${spring.application.name}
 
 logging:
   level:
