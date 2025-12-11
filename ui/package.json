@@ -16,12 +16,35 @@
     "clean": "rimraf dist",
     "type-check": "tsc --noEmit",
     "lint": "echo 'No linter configured yet'",
-    "test": "echo 'No tests configured yet'"
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:unit": "vitest --run tests/unit",
+    "test:integration": "vitest --run tests/integration",
+    "test:properties": "vitest --run tests/properties",
+    "test:coverage": "vitest --run --coverage",
+    "test:coverage:unit": "vitest --run --coverage tests/unit",
+    "test:coverage:integration": "vitest --run --coverage tests/integration",
+    "test:coverage:properties": "vitest --run --coverage tests/properties",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:properties",
+    "test:all:coverage": "vitest --run --coverage --reporter=verbose --reporter=json --reporter=html",
+    "test:ci": "vitest --run --coverage --reporter=verbose --reporter=junit --reporter=json",
+    "test:ui": "vitest --ui",
+    "test:report": "npm run test:all:coverage && node scripts/test-report.js",
+    "test:report:ci": "npm run test:ci && node scripts/test-report.js",
+    "test:run": "node scripts/run-tests.js",
+    "test:run:ci": "node scripts/run-tests.js --ci --coverage --bail",
+    "test:run:parallel": "node scripts/run-tests.js --parallel"
   },
   "devDependencies": {
     "@types/node": "^24.10.2",
+    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/ui": "^4.0.15",
+    "fast-check": "^4.4.0",
+    "happy-dom": "^20.0.11",
+    "msw": "^2.12.4",
     "rimraf": "^5.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.15"
   },
   "keywords": [
     "typescript",

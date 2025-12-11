@@ -48,6 +48,11 @@ ui/*.d.ts
 ui/*.js.map
 ui/*.cjs
 
+### Test Results ###
+ui/coverage/
+ui/test-results/
+*.lcov
+
 ### MISC ###
 pgdata/
 .env
