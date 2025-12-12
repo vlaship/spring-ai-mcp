@@ -22,6 +22,14 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Prepare Docker tags
+      id: tags
+      run: |
+        # Sanitize branch name for Docker tag (replace / with -)
+        BRANCH_TAG=$(echo "${{ github.ref_name }}" | sed 's/\//-/g' | tr '[:upper:]' '[:lower:]')
+        echo "branch_tag=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+        echo "short_sha=${GITHUB_SHA:0:8}" >> $GITHUB_OUTPUT
+
     - name: Build Docker image
       uses: docker/build-push-action@v5
       with:
@@ -29,8 +37,8 @@ jobs:
         push: false
         tags: |
           pooch-palace-${{ matrix.component }}:latest
-          pooch-palace-${{ matrix.component }}:${{ github.sha }}
-          pooch-palace-${{ matrix.component }}:${{ github.ref_name }}
+          pooch-palace-${{ matrix.component }}:${{ steps.tags.outputs.short_sha }}
+          pooch-palace-${{ matrix.component }}:${{ steps.tags.outputs.branch_tag }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         
