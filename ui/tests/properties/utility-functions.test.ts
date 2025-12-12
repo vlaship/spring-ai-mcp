@@ -86,6 +86,7 @@ describe('Utility Functions Property Tests', () => {
           fc.oneof(
             // Valid ISO timestamps
             fc.date({ min: new Date('1970-01-01'), max: new Date('2100-12-31') })
+              .filter(d => !isNaN(d.getTime())) // Filter out invalid dates
               .map(d => d.toISOString()),
             // Invalid timestamp strings
             fc.string(),
