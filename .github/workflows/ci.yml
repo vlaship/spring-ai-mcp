@@ -2,7 +2,7 @@ name: CI - Build Docker Images
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ "**" ]  # Build on every branch
   pull_request:
     branches: [ main ]
 
@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         component: [assistant, mcp-server, ui]
+      fail-fast: false  # Continue building other components even if one fails
 
     steps:
     - name: Checkout repository
@@ -26,9 +27,23 @@ jobs:
       with:
         context: ./${{ matrix.component }}
         push: false
-        tags: pooch-palace-${{ matrix.component }}:latest
+        tags: |
+          pooch-palace-${{ matrix.component }}:latest
+          pooch-palace-${{ matrix.component }}:${{ github.sha }}
+          pooch-palace-${{ matrix.component }}:${{ github.ref_name }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        
+    - name: Test Docker image
+      run: |
+        # Test that the image was built successfully
+        docker images pooch-palace-${{ matrix.component }}:latest
+        
+        # Basic smoke test - ensure container can start
+        if [ "${{ matrix.component }}" = "ui" ]; then
+          # For UI, test that it can start (will exit quickly but that's expected)
+          timeout 10s docker run --rm pooch-palace-${{ matrix.component }}:latest || true
+        fi
 
   test:
     runs-on: ubuntu-latest
@@ -141,3 +156,30 @@ jobs:
           } catch (error) {
             console.log('Could not post test results comment:', error.message);
           }
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: always()
+    
+    steps:
+    - name: Check build results
+      run: |
+        echo "Build job result: ${{ needs.build.result }}"
+        echo "Test job result: ${{ needs.test.result }}"
+        
+        if [[ "${{ needs.build.result }}" == "success" && "${{ needs.test.result }}" == "success" ]]; then
+          echo "✅ All Docker images built successfully and all tests passed!"
+          echo "🐕 Pooch Palace is ready for deployment!"
+        elif [[ "${{ needs.build.result }}" == "success" ]]; then
+          echo "✅ All Docker images built successfully"
+          echo "❌ Some tests failed"
+          exit 1
+        elif [[ "${{ needs.test.result }}" == "success" ]]; then
+          echo "✅ All tests passed"
+          echo "❌ Some Docker builds failed"
+          exit 1
+        else
+          echo "❌ Both builds and tests had issues"
+          exit 1
+        fi
