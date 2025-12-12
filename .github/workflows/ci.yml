@@ -2,11 +2,8 @@ name: CI - Build Docker Images
 
 on:
   push:
-    branches: [ "**" ]  # Build on every branch
+    branches: [ main ]  # Only run on main branch pushes
   pull_request:
-    branches: [ main ]
-    types: [opened, synchronize, reopened, ready_for_review]
-  pull_request_target:
     branches: [ main ]
     types: [opened, synchronize, reopened, ready_for_review]
 
