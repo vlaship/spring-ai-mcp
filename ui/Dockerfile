@@ -4,10 +4,15 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY tsconfig*.json ./
+COPY vitest.config*.ts ./
 
 RUN npm ci
 
 COPY src ./src
+COPY tests ./tests
+
+# Run tests to ensure code quality before building
+RUN npm test
 
 RUN npm run build:all
 

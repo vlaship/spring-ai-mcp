@@ -20,26 +20,85 @@ class StateManager {
   }
 
   setUsers(users: readonly User[]): void {
+    // Validate input according to Requirements 4.3
+    if (!Array.isArray(users)) {
+      throw new Error('Invalid state update: users must be an array');
+    }
+    
+    // Validate each user object
+    for (const user of users) {
+      if (!user || typeof user !== 'object') {
+        throw new Error('Invalid state update: each user must be an object');
+      }
+      if (typeof user.userId !== 'string') {
+        throw new Error('Invalid state update: user.userId must be a string');
+      }
+      if (typeof user.name !== 'string') {
+        throw new Error('Invalid state update: user.name must be a string');
+      }
+    }
+    
     this.state = { ...this.state, users };
   }
 
   setChats(chats: readonly Chat[]): void {
+    // Validate input according to Requirements 4.3
+    if (!Array.isArray(chats)) {
+      throw new Error('Invalid state update: chats must be an array');
+    }
+    
+    // Validate each chat object
+    for (const chat of chats) {
+      if (!chat || typeof chat !== 'object') {
+        throw new Error('Invalid state update: each chat must be an object');
+      }
+      if (typeof chat.chatId !== 'string') {
+        throw new Error('Invalid state update: chat.chatId must be a string');
+      }
+      if (chat.title !== null && typeof chat.title !== 'string') {
+        throw new Error('Invalid state update: chat.title must be a string or null');
+      }
+      if (typeof chat.createdAt !== 'string') {
+        throw new Error('Invalid state update: chat.createdAt must be a string');
+      }
+    }
+    
     this.state = { ...this.state, chats };
   }
 
   setSelectedUserId(userId: string | null): void {
+    // Validate input according to Requirements 4.3
+    if (userId !== null && typeof userId !== 'string') {
+      throw new Error('Invalid state update: selectedUserId must be a string or null');
+    }
+    
     this.state = { ...this.state, selectedUserId: userId };
   }
 
   setSelectedChatId(chatId: string | null): void {
+    // Validate input according to Requirements 4.3
+    if (chatId !== null && typeof chatId !== 'string') {
+      throw new Error('Invalid state update: selectedChatId must be a string or null');
+    }
+    
     this.state = { ...this.state, selectedChatId: chatId };
   }
 
   setIsSending(isSending: boolean): void {
+    // Validate input according to Requirements 4.3
+    if (typeof isSending !== 'boolean') {
+      throw new Error('Invalid state update: isSending must be a boolean');
+    }
+    
     this.state = { ...this.state, isSending };
   }
 
   setIsComposingNewChat(isComposingNewChat: boolean): void {
+    // Validate input according to Requirements 4.3
+    if (typeof isComposingNewChat !== 'boolean') {
+      throw new Error('Invalid state update: isComposingNewChat must be a boolean');
+    }
+    
     this.state = { ...this.state, isComposingNewChat };
   }
 

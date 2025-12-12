@@ -171,8 +171,9 @@ export class UIComponents {
   startPendingStatusAnimation(messageId: string): number {
     let frame = 0;
     const updateText = () => {
+      const escapedMessageId = CSS.escape(messageId);
       const messageBody = this.chatHistory.querySelector(
-        `[data-message-id="${messageId}"] .${CSS_CLASSES.chatBubbleText}`
+        `[data-message-id="${escapedMessageId}"] .${CSS_CLASSES.chatBubbleText}`
       );
       if (!messageBody) {
         return;
