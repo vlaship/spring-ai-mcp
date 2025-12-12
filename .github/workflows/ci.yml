@@ -175,6 +175,7 @@ jobs:
     steps:
     - name: Check CI Status
       run: |
+        echo "=== CI Status Check ==="
         echo "Test job result: ${{ needs.test.result }}"
         echo "Build job result: ${{ needs.build.result }}"
         
