@@ -180,6 +180,7 @@ jobs:
     - name: Check CI Status
       run: |
         echo "=== CI Status Check ==="
+        echo "Commit: ${{ github.sha }}"
         echo "Test job result: ${{ needs.test.result }}"
         echo "Build job result: ${{ needs.build.result }}"
         
