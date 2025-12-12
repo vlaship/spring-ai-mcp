@@ -66,8 +66,6 @@ export class ChatService {
     let currentHistoryKey = historyKey;
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
       const stream = streamAssistantResponse({
         question,
         userId: state.selectedUserId,

@@ -209,7 +209,7 @@ class App {
       return;
     }
 
-    const historyKey = stateManager.getActiveHistoryKey();
+    let historyKey = stateManager.getActiveHistoryKey();
     this.elements.messageInput.value = '';
     
     let animationId: number | null = null;
@@ -220,10 +220,14 @@ class App {
         question,
         // onDelta
         () => {
+          // Update historyKey in case it changed during streaming
+          historyKey = stateManager.getActiveHistoryKey();
           this.uiComponents.renderChatHistory(stateManager.getHistory(historyKey));
         },
         // onComplete
-        async () => {
+        async (chatId: string) => {
+          // Update historyKey to the final chatId
+          historyKey = chatId || stateManager.getActiveHistoryKey();
           if (animationId !== null) {
             stateManager.stopPendingAnimation(animationId.toString());
           }
@@ -259,6 +263,8 @@ class App {
 
     } catch (error) {
       console.error('Failed to send message:', error);
+      // Use the current active history key in case it changed
+      historyKey = stateManager.getActiveHistoryKey();
       this.uiComponents.renderChatHistory(stateManager.getHistory(historyKey));
     } finally {
       this.updateComposerState();
