@@ -1,6 +1,5 @@
 services:
 
-  ### database
   postgres:
     image: pgvector/pgvector:pg18
     environment:
@@ -11,8 +10,12 @@ services:
       - "5432:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  ### local llm + embeddings
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -21,3 +24,77 @@ services:
       - "11434:11434"
     volumes:
       - ./ollama:/root/.ollama
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: pooch-palace-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_PORT=8082
+      # - SERVER_SERVLET_CONTEXT_PATH=/proposal-mcp-service
+      - SPRING_PROFILES_ACTIVE=docker
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  assistant:
+    build:
+      context: ./assistant
+      dockerfile: Dockerfile
+    container_name: pooch-palace-assistant
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - SERVER_SERVLET_CONTEXT_PATH=/proposal-assistant-service
+      - SPRING_PROFILES_ACTIVE=docker,ollama
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_SCHEMA=${DB_SCHEMA}
+      - MCP_SERVER_URL=http://mcp-server:8082/sse
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - postgres
+      - ollama
+      - mcp-server
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  web-ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: pooch-palace-ui
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - ASSISTANT_URL=http://localhost:8081/proposal-assistant-service
+    depends_on:
+      - assistant
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3

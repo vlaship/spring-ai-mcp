@@ -1,0 +1,19 @@
+spring:
+  ai:
+    mcp:
+      client:
+        sse:
+          connections:
+            scheduler:
+              url: ${MCP_SERVER_URL}
+
+    ollama:
+      base-url: ${OLLAMA_BASE_URL}
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?applicationName=${spring.application.name}
+
+server:
+  port: ${SERVER_PORT}
+  servlet:
+    context-path: ${SERVER_SERVLET_CONTEXT_PATH}
